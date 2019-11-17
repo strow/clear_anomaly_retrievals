@@ -1,0 +1,16 @@
+* Overview
+
+- Git repo for the code that actually runs the anomaly retrievals
+- Each commit should include a message (which can be long) as to what run is being committed.
+
+** Commit Messages
+
+- Top line is what you see with git log, keep it one line, max 50 characters
+- Then SKIP A LINE
+- Then put in a longer message that explains all that is going on with this commit/run
+- Best to wrap the longer message to max 72 characters
+
+** What to Avoid
+
+- Storage of any results (.gitignore takes care of that)
+- No analysis here (use another repo that you control)
