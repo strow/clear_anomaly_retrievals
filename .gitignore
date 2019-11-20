@@ -1,0 +1,18 @@
+#
+# top level .gitignore
+#
+# mostly to make sure there are no datafiles (eg .mat) that are automatically saved
+#
+# so notice that eg OutputAnomaly_OBS and OutputAnomaly_CAL have their own .gitignore that say this also
+
+*.mat
+*.fig
+*.dat
+*.rtp
+*.log
+*.pdf
+
+WORKS*
+run/*.mat
+run/*/*.mat
+run/*/*/*.mat

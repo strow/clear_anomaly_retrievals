@@ -1,0 +1,8 @@
+cd ../run
+mkdir_OutputAnomaly_OBSCAL.sc
+xnw OutputAnomaly_CAL/.gitignore OutputAnomaly_OBS/.gitignore    ## put the .gitignore .mat here
+
+cd ../src
+mv  clust_run_retrieval_latbins_AIRS_iasitimespan_loop_anomaly.m clust_run_retrieval_latbins_loop_anomaly.m
+mv  clust_run_retrieval_latbins_AIRS_iasitimespan_loop_anomalyV2.m clust_run_retrieval_latbins_loop_anomalyV2.m
+

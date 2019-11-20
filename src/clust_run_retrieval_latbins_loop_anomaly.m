@@ -14,7 +14,7 @@ JOB = str2num(getenv('SLURM_ARRAY_TASK_ID'));
 %JOB = 365
 %JOB = 365
 %JOB = JUNK    %% for use with loop_clust_run_retrieval_latbins_AIRS_loop_anomaly.m
-%JOB = 357
+JOB = 357
 
 %---------------------------------------------------------------------------
 addpath /home/sergio/MATLABCODE/oem_pkg

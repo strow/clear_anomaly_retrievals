@@ -132,7 +132,7 @@ driver.rateset.ncfile   = driver.rateset.datafile;
 driver = get_rates(driver);
 %---------------------------------------------------------------------------
 % Jacobian file: f = 2378x1 and M_TS_jac_all = 36x2378x200
-% driver.jacobian.filename = '../../oem_pkg/Test/M_TS_jac_all.mat';
+% driver.jacobian.filename = '/home/sergio/MATLABCODE/oem_pkg/Test/M_TS_jac_all.mat';
 %% clear sky
 
 iXJac = settings.iXJac;
@@ -144,11 +144,11 @@ iXJac = settings.iXJac;
 
 if driver.i16daytimestep < 0
   if settings.descORasc == +1
-    driver.jacobian.filename = '../../oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/JUNK/kcarta_M_TS_jac_all_5_97_97_97_2645.mat';
+    driver.jacobian.filename = '/home/sergio/MATLABCODE/oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/JUNK/kcarta_M_TS_jac_all_5_97_97_97_2645.mat';
     fprintf(1,'reading in constant kcarta jac file %s \n',driver.jacobian.filename)
   else
     %% for now assume same jacs
-    driver.jacobian.filename = '../../oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/JUNK/kcarta_M_TS_jac_all_5_97_97_97_2645.mat';
+    driver.jacobian.filename = '/home/sergio/MATLABCODE/oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/JUNK/kcarta_M_TS_jac_all_5_97_97_97_2645.mat';
     fprintf(1,'reading in constant kcarta jac file %s \n',driver.jacobian.filename)
   end
 elseif driver.i16daytimestep > 0
@@ -156,9 +156,9 @@ elseif driver.i16daytimestep > 0
   if iXJac == 1
     %% sarta time vary jacs
     %asarta  = load('../MakeJacsSARTA/SARTA_AIRSL1c_Anomaly365_16/RESULTS/sarta_182_fixCFC_M_TS_jac_all_5_97_97_97_2645.mat');
-    driver.jacobian.filename = ['../../oem_pkg_run_sergio_AuxJacs/MakeJacsSARTA/SARTA_AIRSL1c_Anomaly365_16_with_seasonal_OldSarta_largepert//RESULTS/sarta_' junk '_fixCFC_M_TS_jac_all_5_97_97_97_2645.mat']; %% old sarta
-    driver.jacobian.filename = ['../../oem_pkg_run_sergio_AuxJacs/MakeJacsSARTA/SARTA_AIRSL1c_Anomaly365_16_no_seasonal_OldSarta_smallpert//RESULTS/sarta_' junk '_fixCFC_M_TS_jac_all_5_97_97_97_2645.mat'];   %% old sarta
-    driver.jacobian.filename = ['../../oem_pkg_run_sergio_AuxJacs/MakeJacsSARTA/SARTA_AIRSL1c_Anomaly365_16/RESULTS/sarta_' junk '_fixCFC_M_TS_jac_all_5_97_97_97_2645.mat'];                         %% new sarta
+    driver.jacobian.filename = ['/home/sergio/MATLABCODE/oem_pkg_run_sergio_AuxJacs/MakeJacsSARTA/SARTA_AIRSL1c_Anomaly365_16_with_seasonal_OldSarta_largepert//RESULTS/sarta_' junk '_fixCFC_M_TS_jac_all_5_97_97_97_2645.mat']; %% old sarta
+    driver.jacobian.filename = ['/home/sergio/MATLABCODE/oem_pkg_run_sergio_AuxJacs/MakeJacsSARTA/SARTA_AIRSL1c_Anomaly365_16_no_seasonal_OldSarta_smallpert//RESULTS/sarta_' junk '_fixCFC_M_TS_jac_all_5_97_97_97_2645.mat'];   %% old sarta
+    driver.jacobian.filename = ['/home/sergio/MATLABCODE/oem_pkg_run_sergio_AuxJacs/MakeJacsSARTA/SARTA_AIRSL1c_Anomaly365_16/RESULTS/sarta_' junk '_fixCFC_M_TS_jac_all_5_97_97_97_2645.mat'];                         %% new sarta
     fprintf(1,'iXJac == 1 reading in timestep sarta jac file %s \n',driver.jacobian.filename)
 
   elseif iXJac == 2  
@@ -167,26 +167,26 @@ elseif driver.i16daytimestep > 0
 
     %% until June 26, 2019, the finite diff tracegas jacs used dQ = 0.1, dT = 1.0
     %% together with iXJac = 2,iDoStrowFiniteJac = -1 gives anomaly_0dayavg_results_strow_latbin_unc.mat
-    driver.jacobian.filename = ['../../oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/Anomaly365_16_12p8_dQpert0.1_dTpert1.0/RESULTS/kcarta_' junk '_M_TS_jac_all_5_97_97_97_2645.mat'];  
+    driver.jacobian.filename = ['/home/sergio/MATLABCODE/oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/Anomaly365_16_12p8_dQpert0.1_dTpert1.0/RESULTS/kcarta_' junk '_M_TS_jac_all_5_97_97_97_2645.mat'];  
 
     %% after June 27, 2019, the finite diff tracegas jacs used dQ = 0.001, dT = 0.01 but BAD tracegas profiles
     %% use with  together with iXJac = 2,iDoStrowFiniteJac = -1
-    driver.jacobian.filename = ['../../oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/Anomaly365_16_12p8_tillJuly01_2019/RESULTS/kcarta_' junk '_M_TS_jac_all_5_97_97_97_2645.mat']; 
+    driver.jacobian.filename = ['/home/sergio/MATLABCODE/oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/Anomaly365_16_12p8_tillJuly01_2019/RESULTS/kcarta_' junk '_M_TS_jac_all_5_97_97_97_2645.mat']; 
 
     %% after July 3 to July 16, 2019, the finite diff tracegas jacs used dQ = 0.001,dT = 0.01 GOOD tracegas profiles (basically the glatm.dat tracegas profiles for CO2/N2O/CH4 adjusted in time)
     %% the profiles still have seasonal
     %% use with  together with iXJac = 2,iDoStrowFiniteJac = -1
-    driver.jacobian.filename = ['../../oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/Anomaly365_16_12p8_July12_2019_Great_But_with_Seasonal/RESULTS/kcarta_' junk '_M_TS_jac_all_5_97_97_97_2645.mat']; 
+    driver.jacobian.filename = ['/home/sergio/MATLABCODE/oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/Anomaly365_16_12p8_July12_2019_Great_But_with_Seasonal/RESULTS/kcarta_' junk '_M_TS_jac_all_5_97_97_97_2645.mat']; 
 
     %% after July 16, 2019, the finite diff tracegas jacs used dQ = 0.001,dT = 0.01 GOOD tracegas profiles (basically the glatm.dat tracegas profiles for CO2/N2O/CH4 adjusted in time)
     %% the profiles do not have seasonal
     %% use with  together with iXJac = 2,iDoStrowFiniteJac = -1
-    driver.jacobian.filename = ['../../oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/Anomaly365_16_12p8/RESULTS/kcarta_' junk '_M_TS_jac_all_5_97_97_97_2645.mat']; 
+    driver.jacobian.filename = ['/home/sergio/MATLABCODE/oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/Anomaly365_16_12p8/RESULTS/kcarta_' junk '_M_TS_jac_all_5_97_97_97_2645.mat']; 
 
     fprintf(1,'iXJac == 2 reading in timestep kcarta jac file %s \n',driver.jacobian.filename)
   elseif iXJac == 0
     %% constant kcarta jacs
-    driver.jacobian.filename = '../../oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/JUNK/kcarta_M_TS_jac_all_5_97_97_97_2645.mat';
+    driver.jacobian.filename = '/home/sergio/MATLABCODE/oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/JUNK/kcarta_M_TS_jac_all_5_97_97_97_2645.mat';
     fprintf(1,'iXJac == 0 reading in constant kcarta jac file %s \n',driver.jacobian.filename)
   end
 end

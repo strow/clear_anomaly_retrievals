@@ -112,10 +112,28 @@ mat_od = exp(-mat_od.^2./(1*l_c^2));
    coz(ix).width2 = coz(ix).width1;
 
 % Temperature level uncertainties, then scaled and squared
-tunc = cov2lev(ct(ix),driver.jacobian.numlays);
-t_sigma = (tunc./tnorm);
-tmat = (t_sigma'*t_sigma).*mat_od;
-driver.oem.tunc = tunc;
+if ~exist('iFixTz_NoFit')
+  tunc = cov2lev(ct(ix),driver.jacobian.numlays);
+  t_sigma = (tunc./tnorm);
+  tmat = (t_sigma'*t_sigma).*mat_od;
+  driver.oem.tunc = tunc;
+elseif exist('iFixTz_NoFit','var') & ~strfind(driver.rateset.ocb_set,'obs')
+  tunc = cov2lev(ct(ix),driver.jacobian.numlays);
+  t_sigma = (tunc./tnorm);
+  tmat = (t_sigma'*t_sigma).*mat_od;
+  driver.oem.tunc = tunc;
+elseif exist('iFixTz_NoFit','var') & strfind(driver.rateset.ocb_set,'obs')
+  %% from strow_override_defaults_latbins_AIRS_fewlays.m
+  if iFixTz_NoFit > 0
+    disp('making sure T is not fitted!!!!')
+
+    %driver.oem.tunc = ones(size(tunc)) * 1.0e-16;  cov_set(11) = 1.0e10;  %% THIS COMBO WORKS, CO2, CFC,N2O, CH4 good but still see residual dT/dt
+    %driver.oem.tunc = ones(size(tunc)) * 1.0e-16;  cov_set(11) = 1.0e16;  %% THIS COMBO WORKS, much smaller dT/dt, CO2 good, CFC,O3,WV bad
+    %driver.oem.tunc = ones(size(tunc)) * 1.0e-16;  cov_set(11) = 1.0e12;  %% 
+
+    driver.oem.tunc = []; cov_set(11) = 1.0e10;
+  end
+end
 
 % Water level uncertainties, then scaled and squared
 wunc = cov2lev(cw(ix),driver.jacobian.numlays);
@@ -151,9 +169,13 @@ elseif settings.set_tracegas == 1 & settings.co2lays == 3 & driver.i16daytimeste
 end
 
 fmat  = diag(fmatd./fnorm); 
-driver.oem.cov = blkdiag(fmat,wmat,tmat,ozmat);
+if exist('tmat','var')
+  driver.oem.cov = blkdiag(fmat,wmat,tmat,ozmat);
+else
+  driver.oem.cov = blkdiag(fmat,wmat,ozmat);
+end
 
-if topts.tie_sst_lowestlayer > 0
+if topts.tie_sst_lowestlayer > 0 & exist('tmat','var')
   %% now tie together surface temp with lowest layers
   wah1 = driver.oem.cov(driver.jacobian.scalar_i(end),driver.jacobian.scalar_i(end));
   wah2 = driver.oem.cov(driver.jacobian.temp_i(end),driver.jacobian.temp_i(end));
@@ -166,7 +188,14 @@ end
 %---------------------------------------------------------------------
 % Empirical regularization parameters and switches
 driver.oem.reg_type = 'reg_and_cov'; % 'reg_and_cov','cov','reg' are other choices
+
 % Separate reg weights for water, temperature profiles
-driver.oem.alpha_temp =  cov_set(11);
+if ~exist('iFixTz_NoFit')
+  driver.oem.alpha_temp =  cov_set(11);
+elseif exist('iFixTz_NoFit','var') & ~strfind(driver.rateset.ocb_set,'obs')
+  driver.oem.alpha_temp =  cov_set(11);
+elseif exist('iFixTz_NoFit','var') & strfind(driver.rateset.ocb_set,'obs')
+  disp('oops iFixTz_NoFit exits, for driver.rateset.ocb_set = obs so not settiong driver.oem.alpha_temp')
+end
 driver.oem.alpha_water = cov_set(12);
 driver.oem.alpha_ozone = cov_set(13);
