@@ -49,18 +49,35 @@ fairs2645 = fairs(ichan);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 if chan_LW_SW == 0
+  disp('use only LW/MW channels in choose_goodchans_from_2645.m')
   ahaLW = find(fairs2645 <= 1640);
   ch = intersect(ch,ahaLW);
 elseif chan_LW_SW == 1
+  disp('use LW/MW away from 690 cm-1 in choose_goodchans_from_2645.m')
   ahaLW = find(fairs2645 >= 690 & fairs2645 <= 1640);
   ch = intersect(ch,ahaLW);
 elseif chan_LW_SW == -1
-  ch = ch;
+  disp('use LW and SW chans in choose_goodchans_from_2645.m');
+  %% ahaSWhigh = find(fairs2645 >= 2310 & fairs2645 <= 2370);
+  junk = load('stratSW.mat');
+  ahaSWhigh = junk.iStratSW;
+  ch = setdiff(ch,ahaSWhigh);
+elseif chan_LW_SW == -2
+  disp('use SW chans only in choose_goodchans_from_2645.m');
+  ahaSWhigh1 = find(fairs2645 >= 2310 & fairs2645 <= 2370);
+  ahaSWhigh1 = find(fairs2645 >= 1910 & fairs2645 <= 2870);
+  junk = load('stratSW.mat');
+  ahaSWhigh2 = junk.iStratSW;
+  ch = setdiff(ahaSWhigh1,ahaSWhigh2);
+  chacha = find(fairs2645(ch) > 1910);  %% somehow a few LW changs still get in
+  %ch = ch(6:end);                      %% somehow a few LW changs still get in
+  ch = ch(chacha);
 else
   error('unknown option')  
 end
 
 %clf; plot(fairs2645(ch),'+-'); grid; title(['good channels = ' num2str(length(ch))]); disp('ret'); pause
+%keyboard_nowindow
 %error('lkgsjlkjgs')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -10,11 +10,6 @@ addpath ../utility
 
 JOB = str2num(getenv('SLURM_ARRAY_TASK_ID'));
 %JOB = 20
-%JOB = 182
-%JOB = 62
-%JOB = 365
-%JOB = 365
-%JOB = JUNK    %% for use with loop_clust_run_retrieval_latbins_AIRS_loop_anomaly.m
 %JOB = 357
 
 %---------------------------------------------------------------------------

@@ -29,10 +29,12 @@ settings.iDoStrowFiniteJac = -1;       %% -1 : do not change the time varying an
 settings.iChSet = 1;                   %% +1 default, old chans (about 500)
                                        %% +2, new chans (about 400) with CFC11,CFC12      and weak WV, bad chans gone
                                        %% +3, new chans (about 400) w/o  CFC11 with CFC12 and weak WV, bad chans gone
+settings.iFixTz_NoFit = -1;            %% -1 : do not fix Tz to ERA anomaly T(z,time) values
+                                       %% +1 : do     fix Tz to ERA anomaly T(z,time) values
 
 allowedparams = [{'ocb_set'},{'numchan'},{'chan_LW_SW'},{'iChSet'},{'set_tracegas'},{'offsetrates'},...
 			    {'addco2jacs'},{'obs_corr_matrix'},{'invtype'},{'tie_sst_lowestlayer'},{'iNlays_retrieve'},...
-                            {'descORasc'},{'dataset'},{'iXJac'},{'co2lays'},{'iDoStrowFiniteJac'}];
+                            {'descORasc'},{'dataset'},{'iXJac'},{'co2lays'},{'iDoStrowFiniteJac'},{'iFixTz_NoFit'}];
 
 
 %disp('settings before')
@@ -82,7 +84,7 @@ if settings.dataset == 1
   if settings.descORasc == +1 & driver.i16daytimestep < 0
     disp('doing descending latbin rates')
     driver.rateset.datafile  = 'convert_strowrates2oemrates_random_16_year_v32_clear_nucal.mat';
-    driver.rateset.datafile  = 'convert_strowrates2oemrates_random_16_year_v32_clear_nucal_obs_cal_bias.mat';
+    %%%% driver.rateset.datafile  = 'convert_strowrates2oemrates_random_16_year_v32_clear_nucal_obs_cal_bias.mat'; %%% try this ....
     if settings.ocb_set == +1  & driver.i16daytimestep < 0
       %% convert_strowrates2oemrates_random_16_year_v32_clear_nucal.mat does not have cal,bias so have to do this
       %% convert_strowrates2oemrates_random_16_year_v32_clear_nucal_obs_cal_bias.mat is complete so really no need for this
@@ -90,7 +92,8 @@ if settings.dataset == 1
     elseif settings.ocb_set == -1  & driver.i16daytimestep < 0
       %% convert_strowrates2oemrates_random_16_year_v32_clear_nucal.mat does not have cal,bias so have to do this
       %% convert_strowrates2oemrates_random_16_year_v32_clear_nucal_obs_cal_bias.mat is complete so really no need for this
-      driver.rateset.datafile  = 'convert_strowrates2oemrates_random_16_year_v32_clear_nucal_obs_cal_bias.mat';
+      driver.rateset.datafile  = 'convert_strowrates2oemrates_random_16_year_v32_clear_nucal.mat';
+      %%%% driver.rateset.datafile  = 'convert_strowrates2oemrates_random_16_year_v32_clear_nucal_obs_cal_bias.mat';  %% try this ..
     end
   elseif settings.descORasc == -1 & driver.i16daytimestep < 0
     disp('doing ascending latbin rates')
@@ -145,10 +148,20 @@ iXJac = settings.iXJac;
 if driver.i16daytimestep < 0
   if settings.descORasc == +1
     driver.jacobian.filename = '/home/sergio/MATLABCODE/oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/JUNK/kcarta_M_TS_jac_all_5_97_97_97_2645.mat';
+
+    %% we can "fool" the code by using midpoint anomaly jac
+    junk = num2str(180,'%03d');
+    driver.jacobian.filename = ['/home/sergio/MATLABCODE/oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/Anomaly365_16_12p8/RESULTS/kcarta_' junk '_M_TS_jac_all_5_97_97_97_2645.mat']; 
+
     fprintf(1,'reading in constant kcarta jac file %s \n',driver.jacobian.filename)
   else
     %% for now assume same jacs
     driver.jacobian.filename = '/home/sergio/MATLABCODE/oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/JUNK/kcarta_M_TS_jac_all_5_97_97_97_2645.mat';
+
+    %% we can "fool" the code by using midpoint anomaly jac
+    junk = num2str(180,'%03d');
+    driver.jacobian.filename = ['/home/sergio/MATLABCODE/oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/Anomaly365_16_12p8/RESULTS/kcarta_' junk '_M_TS_jac_all_5_97_97_97_2645.mat']; 
+
     fprintf(1,'reading in constant kcarta jac file %s \n',driver.jacobian.filename)
   end
 elseif driver.i16daytimestep > 0
@@ -401,6 +414,107 @@ if abs(settings.set_tracegas) ~= 1
   settings.set_tracegas
   error('incorrect setting for overriding xb tracegas values');
 end
+
+if settings.iFixTz_NoFit > 0 & strfind(driver.rateset.ocb_set,'obs')
+  iFixTz_NoFit = +1;    %%% LARABBEE LIKES THIS TURNED OFF ie keep spectra as is, just read in ERA anom and proceed
+end
+iZeroTVers = 0; %%% use my fit to sarta calcs, as a proxy to ERA T anomalies
+iZeroTVers = 1; %%% use raw ERA T anomalies, and do the averaging here on the fly
+iZeroTVers = 2; %%% use raw ERA T anomalies as saved in era_ptempanom.mat (see compare_era_anomaly_from_fit_and_model.m)
+if exist('iFixTz_NoFit','var')
+  %% from strow_override_defaults_latbins_AIRS_fewlays.m
+  if iFixTz_NoFit > 0 & strfind(driver.rateset.ocb_set,'obs')
+    if iZeroTVers == 0
+      izname = ['OutputAnomaly_CAL/' num2str(driver.iibin,'%02d') '/anomtest_timestep' num2str(driver.i16daytimestep) '.mat'];
+      if exist(izname)
+        fprintf(1,'WARNING setting dT(z,lat,t)/dt using CAL anom in %s \n',izname);       
+        izt = load(izname);
+        cal_T_rates = izt.oem.finalrates(driver.jacobian.temp_i);
+
+        spectra_due_to_T_jac = zeros(size(driver.rateset.rates));
+        renorm_cal_T_rates = cal_T_rates./driver.qrenorm(driver.jacobian.temp_i)';
+        for iiT = 1 : length(driver.jacobian.temp_i)
+          spectra_due_to_T_jac = spectra_due_to_T_jac + renorm_cal_T_rates(iiT)*m_ts_jac(:,driver.jacobian.temp_i(iiT));
+        end
+        load f2645.mat
+        plot(f2645,spectra_due_to_T_jac,'b',f2645,driver.rateset.rates,'m.-',...
+             f2645,sum(m_ts_jac(:,driver.jacobian.temp_i)')*100,'k.-',f2645,driver.rateset.rates-spectra_due_to_T_jac,'r.-')
+        plot(f2645,driver.rateset.rates,'m.-',f2645,driver.rateset.rates-spectra_due_to_T_jac,'r.-',f2645,m_ts_jac(:,1)*10+0.85,'k.-')
+      else
+        fprintf(1,'WARNING trying to setting dT(z,lat,t)/dt using CAL anom but %s DNE so set xb(T) = 0 \n',izname);
+        cal_T_rates = zeros(size(driver.jacobian.temp_i));
+        spectra_due_to_T_jac = zeros(size(driver.rateset.rates));
+        xb(driver.jacobian.temp_i) = 0.0;
+      end
+
+    elseif iZeroTVers == 1
+      era_model_file = ['/asl/s1/sergio/home/MATLABCODE/oem_pkg_run_sergio_AuxJacs/MakeProfs/LATS40_avg_made_Aug20_2019_Clr/'];
+      era_model_file = [era_model_file '/Desc/16DayAvgNoS_withanom/latbin' num2str(driver.iibin,'%02d') '_16day_avg.rp.mat'];
+      izname = era_model_file;
+      x = ['OutputAnomaly_CAL/27/anomtest_timestep' num2str(123) '.mat'];
+      xx = load(x);
+
+      if exist(izname)
+        fprintf(1,'WARNING setting dT(z,lat,t)/dt using raw ERA snom in %s \n',izname);       
+        era_anom = load(era_model_file);
+        figure(1); pcolor(era_anom.p16anomaly.ptempanomaly); shading flat; colorbar; colormap jet; caxis([-5 5])
+        junk = era_anom.p16anomaly.ptempanomaly;
+        for iiii = 1 : 20
+          ixix = xx.jacobian.wvjaclays_used{iiii}-6;  %% 6 = xx.jacobian.scalar_i below
+          if max(ixix) <= 98
+            era_ptempanom(iiii,:) = mean(junk(ixix,:));
+          end
+        end        
+        cal_T_rates = era_ptempanom(:,driver.i16daytimestep);
+
+        spectra_due_to_T_jac = zeros(size(driver.rateset.rates));
+        renorm_cal_T_rates = cal_T_rates./driver.qrenorm(driver.jacobian.temp_i)';
+        for iiT = 1 : length(driver.jacobian.temp_i)
+          spectra_due_to_T_jac = spectra_due_to_T_jac + renorm_cal_T_rates(iiT)*m_ts_jac(:,driver.jacobian.temp_i(iiT));
+        end
+        load f2645.mat
+        plot(f2645,spectra_due_to_T_jac,'b',f2645,driver.rateset.rates,'m.-',...
+             f2645,sum(m_ts_jac(:,driver.jacobian.temp_i)')*100,'k.-',f2645,driver.rateset.rates-spectra_due_to_T_jac,'r.-')
+        plot(f2645,driver.rateset.rates,'m.-',f2645,driver.rateset.rates-spectra_due_to_T_jac,'r.-',f2645,m_ts_jac(:,1)*10+0.85,'k.-')
+
+      else
+        fprintf(1,'WARNING trying to setting dT(z,lat,t)/dt using CAL anom but %s DNE so set xb(T) = 0 \n',izname);
+        cal_T_rates = zeros(size(driver.jacobian.temp_i));
+        spectra_due_to_T_jac = zeros(size(driver.rateset.rates));
+        xb(driver.jacobian.temp_i) = 0.0;
+      end
+
+    elseif iZeroTVers == 2
+      era_model_file = 'era_ptempanom.mat';
+      izname = era_model_file;
+      if exist(izname)
+        fprintf(1,'WARNING setting dT(z,lat,t)/dt using raw ERA anom in %s \n',izname);       
+        era_anom = load(era_model_file);
+        junk = era_anom.era_ptempanom;
+        era_ptempanom = squeeze(junk(driver.iibin,:,:));
+        cal_T_rates = era_ptempanom(:,driver.i16daytimestep);
+
+        spectra_due_to_T_jac = zeros(size(driver.rateset.rates));
+        renorm_cal_T_rates = cal_T_rates./driver.qrenorm(driver.jacobian.temp_i)';
+        for iiT = 1 : length(driver.jacobian.temp_i)
+          spectra_due_to_T_jac = spectra_due_to_T_jac + renorm_cal_T_rates(iiT)*m_ts_jac(:,driver.jacobian.temp_i(iiT));
+        end
+        load f2645.mat
+        plot(f2645,spectra_due_to_T_jac,'b',f2645,driver.rateset.rates,'m.-',...
+             f2645,sum(m_ts_jac(:,driver.jacobian.temp_i)')*100,'k.-',f2645,driver.rateset.rates-spectra_due_to_T_jac,'r.-')
+        plot(f2645,driver.rateset.rates,'m.-',f2645,driver.rateset.rates-spectra_due_to_T_jac,'r.-',f2645,m_ts_jac(:,1)*10+0.85,'k.-')
+
+      else
+        fprintf(1,'WARNING trying to setting dT(z,lat,t)/dt using CAL anom but %s DNE so set xb(T) = 0 \n',izname);
+        cal_T_rates = zeros(size(driver.jacobian.temp_i));
+        spectra_due_to_T_jac = zeros(size(driver.rateset.rates));
+        xb(driver.jacobian.temp_i) = 0.0;
+      end
+
+    end  %% if iZeroTVers == 0 ! if iZeroTVers == 1 | if iZeroTVers == 2
+  end    %% if iFixTz_NoFit > 0 & strfind(driver.rateset.ocb_set,'obs')
+end      %% if exist('iFixTz_NoFit','var')
+
 if settings.set_tracegas == +1 & driver.i16daytimestep < 0
   disp('setting constant rates for tracegas apriori : CO2 = 2.2  CH4 = 4.5 N2O = 0.8 CFC = -1.25')
   if settings.co2lays == 1
@@ -410,19 +524,19 @@ if settings.set_tracegas == +1 & driver.i16daytimestep < 0
     xb(4) = -1.0;
     xb(5) = -1.0;
 
-    xb(1) = 2.2;        % Set CO2 apriori
-    xb(2) = 0.8;        % set N2O 
-    xb(3) = 4.5;        % set CH4
+    xb(1) = 2.2 * 1;    % Set CO2 apriori
+    xb(2) = 0.8 * 1;    % set N2O 
+    xb(3) = 4.5 * 1;    % set CH4
     xb(4) = -1.25 * 0;  % set CFC11, before Aug 23 the mult was 1
     xb(5) = -1.25 * 0;  % set CFC12, before Aug 23 the mult was 1
 
   elseif settings.co2lays == 3
-    xb(1) = 2.2;        % Set CO2 apriori lower trop
-    xb(2) = 2.2;        % Set CO2 apriori mid trop
-    xb(3) = 2.2;        % Set CO2 apriori strat
+    xb(1) = 2.2 * 1;        % Set CO2 apriori lower trop
+    xb(2) = 2.2 * 1;        % Set CO2 apriori mid trop
+    xb(3) = 2.2 * 1;        % Set CO2 apriori strat
 
-    xb(4) = 0.8;        % set N2O 
-    xb(5) = 4.5;        % set CH4
+    xb(4) = 0.8 * 1;        % set N2O 
+    xb(5) = 4.5 * 1;        % set CH4
     xb(6) = -1.25 * 0;  % set CFC11, before Aug 23 the mult was 1
     xb(7) = -1.25 * 0;  % set CFC12, before Aug 23 the mult was 1
   end
@@ -459,6 +573,29 @@ end
 [mm,nn] = size(xb);
 if nn > 1
   xb = xb(:,driver.iibin);
+end
+
+if exist('iFixTz_NoFit','var') & strfind(driver.rateset.ocb_set,'obs')
+
+  disp('\n >>>>> need to account for cal_T_rates by eg subbing in T(z,t) from fits to cal or raw ERA anoms >>>>> \n')
+  xb(driver.jacobian.temp_i) = cal_T_rates;
+
+  aux.FixTz_NoFit = cal_T_rates;
+  aux.orig_water_i = driver.jacobian.water_i;
+  aux.orig_temp_i = driver.jacobian.temp_i;
+  aux.orig_ozone_i = driver.jacobian.ozone_i;
+
+  noT = setdiff(1:length(xb),driver.jacobian.temp_i);
+
+  driver.jacobian.ozone_i =  driver.jacobian.temp_i;
+  driver.jacobian.temp_i = [];
+
+  m_ts_jac = m_ts_jac(:,noT);
+  aux.m_ts_jac    = m_ts_jac;
+
+  xb = xb(noT);
+  driver.rateset.rates = driver.rateset.rates - spectra_due_to_T_jac;   %% LARRABEE DOES NOT WANT THIS
+  driver.qrenorm = driver.qrenorm(noT);
 end
 
 % A Priori stored in aux.xb

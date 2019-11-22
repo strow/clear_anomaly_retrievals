@@ -72,10 +72,16 @@ cov_set = [1.0  1e-1     1e-1      1/2       1e-1          1e-1        1/2      
 %cov_set = [1.0  1e-2      1e-2      1/2       1e-3          1e-3        1/2      1e-2      1e-2         1/2        1e+4      1e+5   1e+2 ]; %works really well for topts.obs_corr_matrix = +1  and 20 lays, OBS fits 700 chans
 %}
 
+%% testing perturbations for paper, see PAPER/questions.txt Q4
+%reduce = [2 3 5 6 8 9];  %% cx.lev1,cx.lev2 for x=WV,T,O3
+%cov_set(reduce) =  cov_set(reduce) * 0.1;
+%cov_set(reduce) =  cov_set(reduce) * 10.0;
+
 fprintf(1,'cov_set lc = %8.6f \n',cov_set(1));
 junk = cov_set([2 3 4  11]); fprintf(1,'      T  : sig_trop  sig_strat cwide alpha = %8.6e %8.6e %8.6e %8.6e \n',junk)
 junk = cov_set([5 6 7  12]); fprintf(1,'      WV : sig_trop  sig_strat cwide alpha = %8.6e %8.6e %8.6e %8.6e \n',junk);
 junk = cov_set([8 9 10 13]); fprintf(1,'      O3 : sig_trop  sig_strat cwide alpha = %8.6e %8.6e %8.6e %8.6e \n',junk)
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -161,6 +167,11 @@ if settings.co2lays == 1
 elseif settings.co2lays == 3
   fmatd = [2 2 2 0.1       2      1     1            0.1];
 end
+
+%% testing perturbations for paper, see PAPER/questions.txt Q5
+%reduce = [11 12 13];  %% alphaWV alphaT alphaO3
+%cov_set(reduce) =  cov_set(reduce) * 0.1; fmatd = fmatd*0.1;
+%cov_set(reduce) =  cov_set(reduce) * 10.0; fmatd = fmatd*10;
 
 if settings.set_tracegas == 1 & settings.co2lays == 1 & driver.i16daytimestep < 0
   fmatd(1:5) = fmatd(1:5)*0.0000001;   %% have put in xb(1:3) so we should not change those values
