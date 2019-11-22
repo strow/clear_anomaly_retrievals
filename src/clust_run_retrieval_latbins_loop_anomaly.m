@@ -1,4 +1,6 @@
 %---------------------------------------------------------------------------
+% same as clust_run_retrieval_latbins_loop_anomalyV2 but runs latbins sequentially forward
+%---------------------------------------------------------------------------
 
 addpath ../utility
 

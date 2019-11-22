@@ -1,4 +1,7 @@
 %---------------------------------------------------------------------------
+% same as clust_run_retrieval_latbins_loop_anomaly but runs latbins sequentially backward
+% not really needed now that cluster is working fine
+%---------------------------------------------------------------------------
 
 addpath ../utility
 
