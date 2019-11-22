@@ -11,8 +11,14 @@
 *.rtp
 *.log
 *.pdf
+
 slurm*
+
 WORKS*
+
 run/*.mat
 run/*/*.mat
 run/*/*/*.mat
+run/Plotutils
+run/ReadResults
+run/badanom.sc
