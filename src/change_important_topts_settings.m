@@ -30,7 +30,7 @@
                             %% then we LINEARLY add in 0,01 K/year, depending on timestep
   
   topts.ocb_set = 0;        %% obs  DEFAULT >>>>>>>>
-  topts.ocb_set = +1;       %% cal
+  %topts.ocb_set = +1;       %% cal
   
   topts.iDoStrowFiniteJac = -1;       %% do not change the time varying anomaly tracegas jacs                            done for all anomaly timesteps
   topts.iDoStrowFiniteJac = +1;       %% +1 stick to Sergio tracegas jacs = BT(1.001 X(t,latbin)) - BT(1.00 X(t,latbin)) interp in time

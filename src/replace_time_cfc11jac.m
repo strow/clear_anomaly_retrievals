@@ -53,6 +53,7 @@ else
     error('huh????')
   end
 
+  fprintf(1,' external cfc11jac = %s \n',newjacname);
   new = load(newjacname);
   if abs(iOrigOrV2) == 3
     new_cfc11_jac = squeeze(new.tracegas(iiBin,:,4));

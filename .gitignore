@@ -11,7 +11,7 @@
 *.rtp
 *.log
 *.pdf
-
+slurm*
 WORKS*
 run/*.mat
 run/*/*.mat

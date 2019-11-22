@@ -1,7 +1,6 @@
 %---------------------------------------------------------------------------
-%---------------------------------------------------------------------------
-% run_retrieval_latbins_AIRS_loop_anomaly.m
-%---------------------------------------------------------------------------
+
+addpath ../utility
 
 %% this is the timestep : 1: 365 (coincidecne : there are 365 days/year and
 %% I did 16 day averages .... so 365/16 steps per year ... and 2002-2018 is
@@ -73,6 +72,8 @@ for iTimeStep = iTimeStep0 : iTimeStepE
 %---------------------------------------------------------------------------
   % Save retrieval output from this loop
   
+  [status,ghash] = githash;
+  driver.githash = ghash;
   if sum(abs(driver.rateset.rates)) > 0 & ~exist(driver.outfilename)
     save(driver.outfilename,'-struct','driver');
   elseif sum(abs(driver.rateset.rates)) < eps & ~exist(driver.outfilename)

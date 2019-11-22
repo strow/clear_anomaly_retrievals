@@ -51,6 +51,7 @@ if i16daytimestep < 0
     error('huh????')
   end
 
+  fprintf(1,' external ch4jac = %s \n',newjacname);
   new = load(newjacname);
   if abs(iOrigOrV2) == 3
     new_ch4_jac = squeeze(new.tracegas(iiBin,:,3));

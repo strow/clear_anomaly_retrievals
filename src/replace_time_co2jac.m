@@ -54,6 +54,7 @@ else
     error('huh????')
   end
 
+  fprintf(1,' external co2jac = %s \n',newjacname);
   new = load(newjacname);
   if abs(iOrigOrV2) == 3
     new_co2_jac = squeeze(new.tracegas(iiBin,:,1));

@@ -50,6 +50,7 @@ else
     error('huh????')
   end
 
+  fprintf(1,' external n2ojac = %s \n',newjacname);
   new = load(newjacname);
   if abs(iOrigOrV2) == 3
     new_n2o_jac = squeeze(new.tracegas(iiBin,:,2));
