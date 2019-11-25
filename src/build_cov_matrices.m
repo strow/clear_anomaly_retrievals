@@ -141,17 +141,35 @@ elseif exist('iFixTz_NoFit','var') & strfind(driver.rateset.ocb_set,'obs')
   end
 end
 
+% ozone level uncertainties, then scaled and squared
+if ~exist('iFixO3_NoFit')
+  ozunc = cov2lev(coz(ix),driver.jacobian.numlays);
+  oz_sigma = (ozunc./oznorm);
+  ozmat = (oz_sigma'*oz_sigma).*mat_od;
+  driver.oem.ozunc = ozunc;
+elseif exist('iFixO3_NoFit','var') & ~strfind(driver.rateset.ocb_set,'obs')
+  ozunc = cov2lev(coz(ix),driver.jacobian.numlays);
+  oz_sigma = (ozunc./oznorm);
+  ozmat = (oz_sigma'*oz_sigma).*mat_od;
+  driver.oem.ozunc = ozunc;
+elseif exist('iFixO3_NoFit','var') & strfind(driver.rateset.ocb_set,'obs')
+  %% from strow_override_defaults_latbins_AIRS_fewlays.m
+  if iFixO3_NoFit > 0
+    disp('making sure O3 is not fitted!!!!')
+
+    %driver.oem.o3unc = ones(size(o3unc)) * 1.0e-16;  cov_set(11) = 1.0e10;  %% THIS COMBO WORKS, CO2, CFC,N2O, CH4 good but still see residual dT/dt
+    %driver.oem.o3unc = ones(size(o3unc)) * 1.0e-16;  cov_set(11) = 1.0e16;  %% THIS COMBO WORKS, much smaller dT/dt, CO2 good, CFC,O3,WV bad
+    %driver.oem.o3unc = ones(size(o3unc)) * 1.0e-16;  cov_set(11) = 1.0e12;  %% 
+
+    driver.oem.o3unc = []; cov_set(13) = 1.0e10;
+  end
+end
+
 % Water level uncertainties, then scaled and squared
 wunc = cov2lev(cw(ix),driver.jacobian.numlays);
 w_sigma = (wunc./wnorm);
 wmat = (w_sigma'*w_sigma).*mat_od;
 driver.oem.wunc = wunc;
-
-% ozone level uncertainties, then scaled and squared
-ozunc = cov2lev(coz(ix),driver.jacobian.numlays);
-oz_sigma = (ozunc./oznorm);
-ozmat = (oz_sigma'*oz_sigma).*mat_od;
-driver.oem.ozunc = ozunc;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -180,10 +198,12 @@ elseif settings.set_tracegas == 1 & settings.co2lays == 3 & driver.i16daytimeste
 end
 
 fmat  = diag(fmatd./fnorm); 
-if exist('tmat','var')
+if exist('tmat','var') & exist('ozmat','var')
   driver.oem.cov = blkdiag(fmat,wmat,tmat,ozmat);
-else
+elseif exist('ozmat','var')
   driver.oem.cov = blkdiag(fmat,wmat,ozmat);
+elseif exist('tmat','var')
+  driver.oem.cov = blkdiag(fmat,wmat,tmat);
 end
 
 if topts.tie_sst_lowestlayer > 0 & exist('tmat','var')
@@ -200,7 +220,9 @@ end
 % Empirical regularization parameters and switches
 driver.oem.reg_type = 'reg_and_cov'; % 'reg_and_cov','cov','reg' are other choices
 
-% Separate reg weights for water, temperature profiles
+% Separate reg weights for water, temperature, ozone profiles
+driver.oem.alpha_water = cov_set(12);
+
 if ~exist('iFixTz_NoFit')
   driver.oem.alpha_temp =  cov_set(11);
 elseif exist('iFixTz_NoFit','var') & ~strfind(driver.rateset.ocb_set,'obs')
@@ -208,5 +230,11 @@ elseif exist('iFixTz_NoFit','var') & ~strfind(driver.rateset.ocb_set,'obs')
 elseif exist('iFixTz_NoFit','var') & strfind(driver.rateset.ocb_set,'obs')
   disp('oops iFixTz_NoFit exits, for driver.rateset.ocb_set = obs so not settiong driver.oem.alpha_temp')
 end
-driver.oem.alpha_water = cov_set(12);
-driver.oem.alpha_ozone = cov_set(13);
+
+if ~exist('iFixO3_NoFit')
+  driver.oem.alpha_ozone =  cov_set(13);
+elseif exist('iFixO3_NoFit','var') & ~strfind(driver.rateset.ocb_set,'obs')
+  driver.oem.alpha_ozone =  cov_set(13);
+elseif exist('iFixO3_NoFit','var') & strfind(driver.rateset.ocb_set,'obs')
+  disp('oops iFixO3_NoFit exits, for driver.rateset.ocb_set = obs so not settiong driver.oem.alpha_ozone')
+end

@@ -31,10 +31,12 @@ settings.iChSet = 1;                   %% +1 default, old chans (about 500)
                                        %% +3, new chans (about 400) w/o  CFC11 with CFC12 and weak WV, bad chans gone
 settings.iFixTz_NoFit = -1;            %% -1 : do not fix Tz to ERA anomaly T(z,time) values
                                        %% +1 : do     fix Tz to ERA anomaly T(z,time) values
+settings.iFixO3_NoFit = -1;            %% -1 : do not fix O3 to ERA anomaly O3(z,time) values
+                                       %% +1 : do     fix O3 to ERA anomaly O3(z,time) values
 
 allowedparams = [{'ocb_set'},{'numchan'},{'chan_LW_SW'},{'iChSet'},{'set_tracegas'},{'offsetrates'},...
 			    {'addco2jacs'},{'obs_corr_matrix'},{'invtype'},{'tie_sst_lowestlayer'},{'iNlays_retrieve'},...
-                            {'descORasc'},{'dataset'},{'iXJac'},{'co2lays'},{'iDoStrowFiniteJac'},{'iFixTz_NoFit'}];
+                            {'descORasc'},{'dataset'},{'iXJac'},{'co2lays'},{'iDoStrowFiniteJac'},{'iFixTz_NoFit'},{'iFixO3_NoFit'}];
 
 
 %disp('settings before')
@@ -425,7 +427,7 @@ if exist('iFixTz_NoFit','var')
   %% from strow_override_defaults_latbins_AIRS_fewlays.m
   if iFixTz_NoFit > 0 & strfind(driver.rateset.ocb_set,'obs')
     if iZeroTVers == 0
-      izname = ['OutputAnomaly_CAL/' num2str(driver.iibin,'%02d') '/anomtest_timestep' num2str(driver.i16daytimestep) '.mat'];
+      izname = ['SAVE_BESTRUNv1/OutputAnomaly_CAL/' num2str(driver.iibin,'%02d') '/anomtest_timestep' num2str(driver.i16daytimestep) '.mat'];
       if exist(izname)
         fprintf(1,'WARNING setting dT(z,lat,t)/dt using CAL anom in %s \n',izname);       
         izt = load(izname);
@@ -451,7 +453,7 @@ if exist('iFixTz_NoFit','var')
       era_model_file = ['/asl/s1/sergio/home/MATLABCODE/oem_pkg_run_sergio_AuxJacs/MakeProfs/LATS40_avg_made_Aug20_2019_Clr/'];
       era_model_file = [era_model_file '/Desc/16DayAvgNoS_withanom/latbin' num2str(driver.iibin,'%02d') '_16day_avg.rp.mat'];
       izname = era_model_file;
-      x = ['OutputAnomaly_CAL/27/anomtest_timestep' num2str(123) '.mat'];
+      x = ['SAVE_BESTRUNv1/OutputAnomaly_CAL/27/anomtest_timestep' num2str(123) '.mat'];
       xx = load(x);
 
       if exist(izname)
@@ -515,6 +517,110 @@ if exist('iFixTz_NoFit','var')
   end    %% if iFixTz_NoFit > 0 & strfind(driver.rateset.ocb_set,'obs')
 end      %% if exist('iFixTz_NoFit','var')
 
+%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if settings.iFixO3_NoFit > 0 & strfind(driver.rateset.ocb_set,'obs')
+  iFixO3_NoFit = +1;    %%% LARABBEE LIKES THIS TURNED OFF ie keep spectra as is, just read in ERA anom and proceed
+end
+iZeroO3Vers = 0; %%% use my fit to sarta calcs, as a proxy to ERA T anomalies
+iZeroO3Vers = 1; %%% use raw ERA T anomalies, and do the averaging here on the fly
+iZeroO3Vers = 2; %%% use raw ERA T anomalies as saved in era_ptempanom.mat (see compare_era_anomaly_from_fit_and_model.m)
+if exist('iFixO3_NoFit','var')
+  %% from strow_override_defaults_latbins_AIRS_fewlays.m
+  if iFixO3_NoFit > 0 & strfind(driver.rateset.ocb_set,'obs')
+    if iZeroO3Vers == 0
+      izname = ['SAVE_BESTRUNv1/OutputAnomaly_CAL/' num2str(driver.iibin,'%02d') '/anomtest_timestep' num2str(driver.i16daytimestep) '.mat'];
+      if exist(izname)
+        fprintf(1,'WARNING setting dO3(z,lat,t)/dt using CAL anom in %s \n',izname);       
+        izt = load(izname);
+        cal_O3_rates = izt.oem.finalrates(driver.jacobian.ozone_i);
+
+        spectra_due_to_O3_jac = zeros(size(driver.rateset.rates));
+        renorm_cal_O3_rates = cal_O3_rates./driver.qrenorm(driver.jacobian.ozone_i)';
+        for iiO3 = 1 : length(driver.jacobian.ozone_i)
+          spectra_due_to_O3_jac = spectra_due_to_O3_jac + renorm_cal_O3_rates(iiT)*m_ts_jac(:,driver.jacobian.ozone_i(iiO3));
+        end
+        load f2645.mat
+        plot(f2645,spectra_due_to_O3_jac,'b',f2645,driver.rateset.rates,'m.-',...
+             f2645,sum(m_ts_jac(:,driver.jacobian.temp_i)')*100,'k.-',f2645,driver.rateset.rates-spectra_due_to_O3_jac,'r.-')
+        plot(f2645,driver.rateset.rates,'m.-',f2645,driver.rateset.rates-spectra_due_to_O3_jac,'r.-',f2645,m_ts_jac(:,1)*10+0.85,'k.-')
+      else
+        fprintf(1,'WARNING trying to setting dO3(z,lat,t)/dt using CAL anom but %s DNE so set xb(O3) = 0 \n',izname);
+        cal_O3_rates = zeros(size(driver.jacobian.ozone_i));
+        spectra_due_to_O3_jac = zeros(size(driver.rateset.rates));
+        xb(driver.jacobian.ozone_i) = 0.0;
+      end
+
+    elseif iZeroO3Vers == 1
+      era_model_file = ['/asl/s1/sergio/home/MATLABCODE/oem_pkg_run_sergio_AuxJacs/MakeProfs/LATS40_avg_made_Aug20_2019_Clr/'];
+      era_model_file = [era_model_file '/Desc/16DayAvgNoS_withanom/latbin' num2str(driver.iibin,'%02d') '_16day_avg.rp.mat'];
+      izname = era_model_file;
+      x = ['SAVE_BESTRUNv1/OutputAnomaly_CAL/27/anomtest_timestep' num2str(123) '.mat'];
+      xx = load(x);
+
+      if exist(izname)
+        fprintf(1,'WARNING setting dO3(z,lat,t)/dt using raw ERA snom in %s \n',izname);       
+        era_anom = load(era_model_file);
+        figure(1); pcolor(era_anom.p16anomaly.ptempanomaly); shading flat; colorbar; colormap jet; caxis([-5 5])
+        junk = era_anom.p16anomaly.ozoneanomaly;
+        for iiii = 1 : 20
+          ixix = xx.jacobian.wvjaclays_used{iiii}-6;  %% 6 = xx.jacobian.scalar_i below
+          if max(ixix) <= 98
+            era_ozoneanom(iiii,:) = mean(junk(ixix,:));
+          end
+        end        
+        cal_ozone_rates = era_ozoneanom(:,driver.i16daytimestep);
+
+        spectra_due_to_ozone_jac = zeros(size(driver.rateset.rates));
+        renorm_cal_O3_rates = cal_O3_rates./driver.qrenorm(driver.jacobian.ozone_i)';
+        for iiO3 = 1 : length(driver.jacobian.ozone_i)
+          spectra_due_to_O3_jac = spectra_due_to_O3_jac + renorm_cal_O3_rates(iiT)*m_ts_jac(:,driver.jacobian.ozone_i(iiO3));
+        end
+        load f2645.mat
+        plot(f2645,spectra_due_to_O3_jac,'b',f2645,driver.rateset.rates,'m.-',...
+             f2645,sum(m_ts_jac(:,driver.jacobian.temp_i)')*100,'k.-',f2645,driver.rateset.rates-spectra_due_to_O3_jac,'r.-')
+        plot(f2645,driver.rateset.rates,'m.-',f2645,driver.rateset.rates-spectra_due_to_O3_jac,'r.-',f2645,m_ts_jac(:,1)*10+0.85,'k.-')
+
+      else
+        fprintf(1,'WARNING trying to setting dO3(z,lat,t)/dt using CAL anom but %s DNE so set xb(O3) = 0 \n',izname);
+        cal_O3_rates = zeros(size(driver.jacobian.ozone_i));
+        spectra_due_to_O3_jac = zeros(size(driver.rateset.rates));
+        xb(driver.jacobian.ozone_i) = 0.0;
+      end
+
+    elseif iZeroO3Vers == 2
+      era_model_file = 'era_gas_3anom.mat';
+      izname = era_model_file;
+      if exist(izname)
+        fprintf(1,'WARNING setting dO3(z,lat,t)/dt using raw ERA anom in %s \n',izname);       
+        era_anom = load(era_model_file);
+        junk = era_anom.era_gas_3anom;
+        era_ozoneanom = squeeze(junk(driver.iibin,:,:));
+        cal_O3_rates = era_ozoneanom(:,driver.i16daytimestep);
+
+        spectra_due_to_O3_jac = zeros(size(driver.rateset.rates));
+        renorm_cal_O3_rates = cal_O3_rates./driver.qrenorm(driver.jacobian.ozone_i)';
+        for iiT = 1 : length(driver.jacobian.ozone_i)
+          spectra_due_to_O3_jac = spectra_due_to_O3_jac + renorm_cal_O3_rates(iiT)*m_ts_jac(:,driver.jacobian.ozone_i(iiT));
+        end
+        load f2645.mat
+        plot(f2645,spectra_due_to_O3_jac,'b',f2645,driver.rateset.rates,'m.-',...
+             f2645,sum(m_ts_jac(:,driver.jacobian.ozone_i)')*100,'k.-',f2645,driver.rateset.rates-spectra_due_to_O3_jac,'r.-')
+        plot(f2645,driver.rateset.rates,'m.-',f2645,driver.rateset.rates-spectra_due_to_O3_jac,'r.-',f2645,m_ts_jac(:,1)*10+0.85,'k.-')
+
+      else
+        fprintf(1,'WARNING trying to setting dT(z,lat,t)/dt using CAL anom but %s DNE so set xb(T) = 0 \n',izname);
+        cal_O3_rates = zeros(size(driver.jacobian.ozone_i));
+        spectra_due_to_O3_jac = zeros(size(driver.rateset.rates));
+        xb(driver.jacobian.ozone_i) = 0.0;
+      end
+
+    end  %% if iZeroO3Vers == 0 ! if iZeroO3Vers == 1 | if iZeroO3Vers == 2
+  end    %% if iFixO3_NoFit > 0 & strfind(driver.rateset.ocb_set,'obs')
+end      %% if exist('iFixO3_NoFit','var')
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+
 if settings.set_tracegas == +1 & driver.i16daytimestep < 0
   disp('setting constant rates for tracegas apriori : CO2 = 2.2  CH4 = 4.5 N2O = 0.8 CFC = -1.25')
   if settings.co2lays == 1
@@ -575,9 +681,10 @@ if nn > 1
   xb = xb(:,driver.iibin);
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%
 if exist('iFixTz_NoFit','var') & strfind(driver.rateset.ocb_set,'obs')
 
-  disp('\n >>>>> need to account for cal_T_rates by eg subbing in T(z,t) from fits to cal or raw ERA anoms >>>>> \n')
+  disp(' >>>>> need to account for cal_T_rates by eg subbing in T(z,t) from fits to cal or raw ERA anoms >>>>> ')
   xb(driver.jacobian.temp_i) = cal_T_rates;
 
   aux.FixTz_NoFit = cal_T_rates;
@@ -598,6 +705,30 @@ if exist('iFixTz_NoFit','var') & strfind(driver.rateset.ocb_set,'obs')
   driver.qrenorm = driver.qrenorm(noT);
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%
+if exist('iFixO3_NoFit','var') & strfind(driver.rateset.ocb_set,'obs')
+
+  disp(' >>>>> need to account for cal_O3_rates by eg subbing in O3(z,t) from fits to cal or raw ERA anoms >>>>> ')
+  xb(driver.jacobian.ozone_i) = cal_O3_rates;
+
+  aux.FixO3_NoFit = cal_O3_rates;
+  aux.orig_water_i = driver.jacobian.water_i;
+  aux.orig_temp_i = driver.jacobian.temp_i;
+  aux.orig_ozone_i = driver.jacobian.ozone_i;
+
+  noO3 = setdiff(1:length(xb),driver.jacobian.ozone_i);
+
+  driver.jacobian.ozone_i =  [];
+
+  m_ts_jac = m_ts_jac(:,noO3);
+  aux.m_ts_jac    = m_ts_jac;
+
+  xb = xb(noO3);
+  driver.rateset.rates = driver.rateset.rates - spectra_due_to_O3_jac;   %% LARRABEE DOES NOT WANT THIS
+  driver.qrenorm = driver.qrenorm(noO3);
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
 % A Priori stored in aux.xb
 aux.xb = xb./driver.qrenorm';
 

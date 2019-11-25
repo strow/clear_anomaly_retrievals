@@ -14,7 +14,7 @@ topts.numchan = 2645;
 %topts.chan_LW_SW =  0;  %% just LW/MW DEFAULT
 %topts.chan_LW_SW = -1;  %% all chans,LW/MW and SW <<<<<<<
 %topts.chan_LW_SW = +1;  %% LW/MW but avoid deep 15 um 
-topts.chan_LW_SW = -2;  %% SW
+topts.chan_LW_SW = -2;  %% SW only
 
 %topts.descORasc = -1;  %% ascending  new; note have not really re-done jacs
 topts.descORasc = +1;   %% descending DEFAULT
@@ -26,7 +26,10 @@ topts.descORasc = +1;   %% descending DEFAULT
 %%%% <<<<<<< this is what I typically change >>>>>>>>>>>>>>   
 
 topts.iFixTz_NoFit = -1;  %% default, fit for T
-%topts.iFixTz_NoFit = +1;  %% fix T and do NO fit for it
+%topts.iFixTz_NoFit = +1;  %% fix T and do NOT fit for it
+
+%topts.iFixO3_NoFit = -1;  %% default, fit for O3
+topts.iFixO3_NoFit = +1;  %% fix O3 and do NOT fit for it
 
 %topts.offsetrates = +1;  %% add in offset of 0.01 K/yr; note for anomaly, if topts.ocb_set = +1;topts.offsetrates = +1
                           %% then we LINEARLY add in 0,01 K/year, depending on timestep
@@ -45,7 +48,6 @@ topts.iDoStrowFiniteJac = -1;       %% do not change the time varying anomaly tr
 topts.iDoStrowFiniteJac = +1;       %% +1 stick to Sergio tracegas jacs = BT(1.001 X(t,latbin)) - BT(1.00 X(t,latbin)) interp in time
 topts.iDoStrowFiniteJac = +2;       %% +2 stick to Strow  tracegas jacs = BT(X(t,latbin)) - BT(2002 X(t,latbin))       interp in time
 topts.iDoStrowFiniteJac = +3;       %% +3 stick to Strow  tracegas jacs = BT(X(t,latbin)) - BT(2002 X(t,latbin))       done for all anomaly timesteps  DEFAULT >>>>>>>
-
 %% topts.iDoStrowFiniteJac = -1;       %% do not change the time varying anomaly tracegas jacs                            done for all anomaly timesteps works great with new kcarta jacs
 
 topts.iXJac = 0; %% const geo kcarta jacs
@@ -55,8 +57,8 @@ topts.iXJac = 2; %% varying geo kcarta jacs DEFAULT >>>>>>>
 topts.iNlays_retrieve = 10;
 topts.iNlays_retrieve = 40;
 topts.iNlays_retrieve = 60;
-topts.iNlays_retrieve = 97;
 topts.iNlays_retrieve = 20; %%% DEFAULT >>>>>>>>
+%topts.iNlays_retrieve = 96;
 
 topts.iChSet = 1;  %% old chans, ORIG >>>>
 topts.iChSet = 2;  %% new chans, yes CFC11, NEW DEFAULT >>>>>
