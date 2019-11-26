@@ -1,3 +1,4 @@
+## submit 365 jobs, one per timestep (each loops over 40 latbins, FAST!)
 /bin/rm slurm*.out
 sbatch --exclude=cnode[204,225,267] --array=1-30      --begin=now     sergio_matlab_jobB.sbatch 1
 sbatch --exclude=cnode[204,225,267] --array=31-60     --begin=now+15  sergio_matlab_jobB.sbatch 1

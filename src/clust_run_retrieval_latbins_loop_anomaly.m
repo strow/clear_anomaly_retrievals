@@ -13,7 +13,7 @@ t1x = tic;
 %% 16 years so total of 365/16 * 16 = 365 steps
 
 JOB = str2num(getenv('SLURM_ARRAY_TASK_ID'));
-%JOB - 20
+%JOB = 20
 %JOB = 357
 
 %%%%%%%%%% ANOM or RATES %%%%%%%%%%

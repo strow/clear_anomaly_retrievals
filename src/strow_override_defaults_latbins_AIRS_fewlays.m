@@ -412,7 +412,7 @@ driver.jacobian.chanset = ch;
 %xb = zeros(296,1);
 xb = zeros(driver.jacobian.wvjaclays_offset + iNlays_retrieve*3,1);
 
-if abs(settings.set_tracegas) ~= 1
+if (abs(settings.set_tracegas) ~= 1) & (settings.set_tracegas ~= 2)
   settings.set_tracegas
   error('incorrect setting for overriding xb tracegas values');
 end
@@ -673,6 +673,45 @@ elseif settings.set_tracegas == +1 & driver.i16daytimestep > 0
     xb(5) = 4.5 * (driver.i16daytimestep-1)/deltaT * 1.0;        % set CH4
     xb(6) = -1.25 * (driver.i16daytimestep-1)/deltaT * 0;  % set CFC11, before Aug 23 the mult was 1
     xb(7) = -1.25 * (driver.i16daytimestep-1)/deltaT * 0;  % set CFC12, before Aug 23 the mult was 1
+  end
+
+elseif settings.set_tracegas == +2 & driver.i16daytimestep > 1
+  junk = 365/16; %% days per timestep 
+  junk = (driver.i16daytimestep-1);
+  str = ['setting time varying rates for tracegas apriori : CO2 = 2.2  CH4 = 4.5 N2O = 0.8 CFC = -1.25 based on previous timestep'];
+  disp(str);
+  fminus = ['OutputAnomaly_OBS/' num2str(driver.iibin,'%02d') '/anomtest_timestep' num2str(driver.i16daytimestep-1) '.mat'];
+  fprintf(1,'looking for %s to fill in co2/n2o/ch4/cfc11/cfc12 rates ... \n',fminus)
+  if exist(fminus)
+    prev = load(fminus);
+    if settings.co2lays == 1
+      deltaT = 365/16; %% days per timestep
+
+      %% default all this while getting good results
+      xb0(1) = 2.2 * (driver.i16daytimestep-1)/deltaT * 1.0;    % Set CO2 apriori
+      xb0(2) = 0.8 * (driver.i16daytimestep-1)/deltaT * 1.0;    % set N2O 
+      xb0(3) = 4.5 * (driver.i16daytimestep-1)/deltaT * 1.0;    % set CH4
+      xb0(4) = -1.25 * (driver.i16daytimestep-1)/deltaT * 0;    % set CFC11, before Aug 23 the mult was 1
+      xb0(5) = -1.25 * (driver.i16daytimestep-1)/deltaT * 0;    % set CFC12, before Aug 23 the mult was 1
+
+      %% overwrite!!!
+      xb(1) = prev.oem.finalrates(1);
+      xb(2) = prev.oem.finalrates(2);
+      xb(3) = prev.oem.finalrates(3);
+      xb(4) = prev.oem.finalrates(4);
+      xb(5) = prev.oem.finalrates(5);
+
+      fprintf(1,'changed CO2   apriori from %8.6f to %8.6f ppv \n',xb0(1),xb(1))
+      fprintf(1,'changed N2O   apriori from %8.6f to %8.6f ppb \n',xb0(2),xb(2))
+      fprintf(1,'changed CH4   apriori from %8.6f to %8.6f ppb \n',xb0(3),xb(3))
+      fprintf(1,'changed CRF11 apriori from %8.6f to %8.6f ppt \n',xb0(4),xb(4))
+      fprintf(1,'changed CFC12 apriori from %8.6f to %8.6f ppt \n',xb0(5),xb(5))
+
+    else
+      error('not doing this')
+    end
+  else
+    error('oops previous file DNE');
   end
 end
 

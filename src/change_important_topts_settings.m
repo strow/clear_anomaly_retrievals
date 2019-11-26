@@ -11,10 +11,10 @@ topts.dataset = 1; %% AIRS 16 year DEFAULT
 topts.co2lays = 1; %% default, co2 column DEFAULT
 
 topts.numchan = 2645;
-%topts.chan_LW_SW =  0;  %% just LW/MW DEFAULT
+topts.chan_LW_SW =  0;  %% just LW/MW DEFAULT
 %topts.chan_LW_SW = -1;  %% all chans,LW/MW and SW <<<<<<<
 %topts.chan_LW_SW = +1;  %% LW/MW but avoid deep 15 um 
-topts.chan_LW_SW = -2;  %% SW only
+%topts.chan_LW_SW = -2;  %% SW only
 
 %topts.descORasc = -1;  %% ascending  new; note have not really re-done jacs
 topts.descORasc = +1;   %% descending DEFAULT
@@ -28,8 +28,8 @@ topts.descORasc = +1;   %% descending DEFAULT
 topts.iFixTz_NoFit = -1;  %% default, fit for T
 %topts.iFixTz_NoFit = +1;  %% fix T and do NOT fit for it
 
-%topts.iFixO3_NoFit = -1;  %% default, fit for O3
-topts.iFixO3_NoFit = +1;  %% fix O3 and do NOT fit for it
+topts.iFixO3_NoFit = -1;  %% default, fit for O3
+%topts.iFixO3_NoFit = +1;  %% fix O3 and do NOT fit for it
 
 %topts.offsetrates = +1;  %% add in offset of 0.01 K/yr; note for anomaly, if topts.ocb_set = +1;topts.offsetrates = +1
                           %% then we LINEARLY add in 0,01 K/year, depending on timestep
@@ -39,10 +39,11 @@ topts.set_tracegas = -1;   %% leave a priori for trace gas as 0, ONLY WHEN DOING
                            %% aslo set driver.i16daytimestep = -1;   in clust_run_retrieval_latbins_AIRS_iasitimespan_loop_anomaly.m
 topts.set_tracegas = +1;   %% set   a priori for trace gas as eg 2.2/1.0/4.5/0.0/0.0 for CO2/N2O/CH4/CFC11/CFC12; if anomaly, adjust according to timestep!!!!!  
                            %% DEFAULT for anom
+topts.set_tracegas = +2;   %% set   a priori for trace gas as eg 2.2/1.0/4.5/0.0/0.0 for CO2/N2O/CH4/CFC11/CFC12; if anomaly, adjust according to PREVIOUS timestep!!!!!  
 %%%%%%%%%% ANOM or RATES %%%%%%%%%%
 
 topts.ocb_set = 0;        %% obs  DEFAULT >>>>>>>>
-%topts.ocb_set = +1;       %% cal
+topts.ocb_set = +1;       %% cal
 
 topts.iDoStrowFiniteJac = -1;       %% do not change the time varying anomaly tracegas jacs                            done for all anomaly timesteps
 topts.iDoStrowFiniteJac = +1;       %% +1 stick to Sergio tracegas jacs = BT(1.001 X(t,latbin)) - BT(1.00 X(t,latbin)) interp in time

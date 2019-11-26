@@ -5,6 +5,7 @@
 #
 # so notice that eg OutputAnomaly_OBS and OutputAnomaly_CAL have their own .gitignore that say this also
 
+## generic "do not need"
 *.mat
 *.fig
 *.dat
@@ -12,10 +13,16 @@
 *.log
 *.pdf
 
+## this is full of huge .mat files that are needed
+static
+
+## running on the cluster produces tons of these files
 slurm*
 
+## "old" revision control
 WORKS*
 
+## do not kleep mat files that are produced after running the code
 run/*.mat
 run/*/*.mat
 run/*/*/*.mat

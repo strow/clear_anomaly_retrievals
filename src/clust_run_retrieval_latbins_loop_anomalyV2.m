@@ -1,16 +1,23 @@
 %---------------------------------------------------------------------------
-% same as clust_run_retrieval_latbins_loop_anomaly but runs latbins sequentially backward
-% not really needed now that cluster is working fine
+%---------------------------------------------------------------------------
+% run_retrieval_latbins_AIRS_loop_anomaly.m
 %---------------------------------------------------------------------------
 
-addpath ../utility
+addpath /home/sergio/MATLABCODE
+system_slurm_stats
+
+t1x = tic;
 
 %% this is the timestep : 1: 365 (coincidecne : there are 365 days/year and
 %% I did 16 day averages .... so 365/16 steps per year ... and 2002-2018 is
 %% 16 years so total of 365/16 * 16 = 365 steps
 
-JOB = str2num(getenv('SLURM_ARRAY_TASK_ID'));  %% JOB = 1 : 40 (fixed latbin, loop over time)
-% JOB = 19;
+JOB = str2num(getenv('SLURM_ARRAY_TASK_ID'));
+%JOB = 20
+
+%%%%%%%%%% ANOM or RATES %%%%%%%%%%
+%JOB = 20   %%% uncomment this when trying to fit for linear rates!!! fix change_important_topts_settings, and set <<< driver.i16daytimestep = -1 >>>;  below
+%%%%%%%%%% ANOM or RATES %%%%%%%%%%
 
 %---------------------------------------------------------------------------
 addpath /home/sergio/MATLABCODE/oem_pkg
@@ -24,6 +31,7 @@ addpath Plotutils
  if driver.debug
     writelog('open');
  end;
+
 %---------------------------------------------------------------------------
 % for this JOB latbin (1:40), loop over 365 anomaly time setps
 %---------------------------------------------------------------------------
@@ -38,7 +46,13 @@ for iTimeStep = iTimeStep0 : iTimeStepE
 %------------------------------------------------------------------------
 %% <<<<<<<    no real need to touch any of this  >>>>>>>>
   driver.iibin     = JOB;
-  driver.i16daytimestep = iTimeStep;
+
+  %%%%%%%%%% ANOM or RATES %%%%%%%%%%
+  driver.i16daytimestep = -1;         %% for the rates, not anomalies, RUN BY HAND BY UN-COMMENTING THIS LINE and 
+                                      %% on top JOB = 20, in change_important_topts_settings.m also set topts.set_tracegas = -1;
+  driver.i16daytimestep = iTimeStep;  %% this is when doing anomaly
+  %%%%%%%%%% ANOM or RATES %%%%%%%%%%
+
   iLat = driver.iibin;
   ix = driver.iibin;
 
@@ -49,13 +63,14 @@ for iTimeStep = iTimeStep0 : iTimeStepE
   driver.oem.nloop = 1;
   driver.oem.doplots = false;
 %---------------------------------------------------------------------------
-  % Override many settings and add covariance matrix
-  change_important_topts_settings
+  change_important_topts_settings  % Override many settings and add covariance matrix
 
-  if topts.ocb_set == 0
+  if topts.ocb_set == 0 & driver.i16daytimestep > 0
     driver.outfilename = ['OutputAnomaly_OBS/' num2str(iLat,'%02d') '/anomtest_timestep' int2str(driver.i16daytimestep) '.mat'];
-  elseif topts.ocb_set == 1
+  elseif topts.ocb_set == 1 & driver.i16daytimestep > 0
     driver.outfilename = ['OutputAnomaly_CAL/' num2str(iLat,'%02d') '/anomtest_timestep' int2str(driver.i16daytimestep) '.mat'];
+  elseif driver.i16daytimestep < 0
+    driver.outfilename = ['Output/test' int2str(iLat) '.mat'];
   end
 
   if topts.iNlays_retrieve >= 97 & ~exist(driver.outfilename)
@@ -74,9 +89,36 @@ for iTimeStep = iTimeStep0 : iTimeStepE
   end
 %---------------------------------------------------------------------------
   % Save retrieval output from this loop
-  
-  [status,ghash] = githash;
-  driver.githash = ghash;
+
+  if isfield(topts,'iFixTz_NoFit')
+    if topts.iFixTz_NoFit > 0
+      junk = 1:length(driver.oem.finalrates)+length(aux.orig_temp_i);
+
+      %% put ozone into correct (expected) spot
+      driver.oem.finalrates(aux.orig_ozone_i) = driver.oem.finalrates(aux.orig_temp_i);
+      driver.oem.finalsigs(aux.orig_ozone_i)  = driver.oem.finalsigs(aux.orig_temp_i);
+
+      %% put fixed/unchanging T anomaly
+      driver.oem.finalrates(aux.orig_temp_i) = aux.FixTz_NoFit;
+      driver.oem.finalsigs(aux.orig_temp_i)  = 0;
+
+      driver.jacobian.temp_i  = driver.jacobian.ozone_i;
+      driver.jacobian.ozone_i = driver.jacobian.ozone_i + driver.jacobian.numlays;
+
+    end
+  end
+
+  if isfield(topts,'iFixO3_NoFit')
+    if topts.iFixO3_NoFit > 0
+
+      %% put ozone into correct (expected) spot
+      driver.oem.finalrates(aux.orig_ozone_i) = aux.FixO3_NoFit;
+      driver.oem.finalsigs(aux.orig_ozone_i)  = 0;
+
+      driver.jacobian.ozone_i = driver.jacobian.temp_i + driver.jacobian.numlays;
+    end
+  end
+
   if sum(abs(driver.rateset.rates)) > 0 & ~exist(driver.outfilename)
     save(driver.outfilename,'-struct','driver');
   elseif sum(abs(driver.rateset.rates)) < eps & ~exist(driver.outfilename)
@@ -90,7 +132,7 @@ for iTimeStep = iTimeStep0 : iTimeStepE
 %---------------------------------------------------------------------------
 % Some simple output
    if sum(abs(driver.rateset.rates)) > 0
-     fprintf('Scalar Retrievals from OEM latbin %2i timestep %3i \n',iLat,JOB)
+     fprintf('Scalar Retrievals from OEM latbin %2i timestep %3i \n',JOB,iTimeStep)
      if topts.co2lays == 1
        fprintf(1,'CO2   (ppm)   %5.3f  +- %5.3f \n',driver.oem.finalrates(1),driver.oem.finalsigs(1));
        fprintf(1,'N2O   (ppb)   %5.3f  +- %5.3f \n',driver.oem.finalrates(2),driver.oem.finalsigs(2));
@@ -164,3 +206,10 @@ else
   plot_all_latbins_fewlays_anom
 end
 %}
+
+t2x = toc(t1x);
+fprintf(1,'time taken (in seconds) for a %3i layer retrievals = %8.4f \n',topts.iNlays_retrieve,t2x)
+
+if driver.i16daytimestep < 0
+  plot_all_latbins_fewlays
+end
