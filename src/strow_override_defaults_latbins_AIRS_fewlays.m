@@ -1,5 +1,7 @@
 function [driver,aux] = strow_override_defaults_latbins_AIRS_fewlays(driver,iNlays_retrieve,topts);
 
+settings.resetnorm2one = -1; %%% default, keep my scaling, set to +1 if you want to reset all to 1.00000000
+
 settings.dataset = 1;       % (1) AIRS 16 year dataset (2) AIRS 11 year (IASI) (3) IASI2AIRS 11 year
 settings.co2lays = 1;       % assume column jac for CO2, or 3 lays (gnd-500,500-trop,trop-TOA
 
@@ -25,18 +27,23 @@ settings.iXJac = 0;                    %% const geo jacs, replace as needed CO2/
 settings.iDoStrowFiniteJac = -1;       %% -1 : do not change the time varying anomaly jacs                                done for all anomaly timesteps
                                        %% +1 stick to Sergio tracegas jacs = BT(1.001 X(t,latbin)) - BT(1.00 X(t,latbin)) interp in time
                                        %% +2 stick to Strow  tracegas jacs = BT(X(t,latbin)) - BT(2002 X(t,latbin)))      interp in time .. 
-                                       %% +3 stick to Strow  tracegas jacs = BT(X(t,latbin)) - BT(2002 X(t,latbin)))      done for all anomaly timesteps
+                                       %% +3 stick to Strow  tracegas jacs = BT(X(t,latbin)) - BT(2002 X(t,latbin)))      done for all anomaly timesteps DEFAULT
+                                       %% +4 stick to Strow  tracegas jacs = BT(X(t,latbin)) - BT(2002 X(t,latbin)))      done for all anomaly timesteps with Age of Air for CO2
 settings.iChSet = 1;                   %% +1 default, old chans (about 500)
                                        %% +2, new chans (about 400) with CFC11,CFC12      and weak WV, bad chans gone
                                        %% +3, new chans (about 400) w/o  CFC11 with CFC12 and weak WV, bad chans gone
-settings.iFixTz_NoFit = -1;            %% -1 : do not fix Tz to ERA anomaly T(z,time) values
-                                       %% +1 : do     fix Tz to ERA anomaly T(z,time) values
-settings.iFixO3_NoFit = -1;            %% -1 : do not fix O3 to ERA anomaly O3(z,time) values
-                                       %% +1 : do     fix O3 to ERA anomaly O3(z,time) values
+settings.iFixTz_NoFit = -1;            %% -1 : do not fix Tz to ERA anomaly T(z,time) values, then fit for Tz
+                                       %% +1 : do     fix Tz to ERA anomaly T(z,time) values, then keep Tz fixed (ie do not fit)
+settings.iFixO3_NoFit = -1;            %% -1 : do not fix O3 to ERA anomaly O3(z,time) values, then fit for O3
+                                       %% +1 : do     fix O3 to ERA anomaly O3(z,time) values, then keep O3 fixed (ie do not fit)
+                                       %% +0 : do     fix O3 to zero        O3(z,time) values, then keep O3 fixed (ie do not fit)
+settings.iFixTG_NoFit = -1;            %% -1 means retrieve all trace gases [CO2 N2O CH4 CFC11 CFC12]
+                                       %% eg [4 5] means do not do CFC11,CFC12
+                                       %% eg [4] means do not do CFC11
 
 allowedparams = [{'ocb_set'},{'numchan'},{'chan_LW_SW'},{'iChSet'},{'set_tracegas'},{'offsetrates'},...
 			    {'addco2jacs'},{'obs_corr_matrix'},{'invtype'},{'tie_sst_lowestlayer'},{'iNlays_retrieve'},...
-                            {'descORasc'},{'dataset'},{'iXJac'},{'co2lays'},{'iDoStrowFiniteJac'},{'iFixTz_NoFit'},{'iFixO3_NoFit'}];
+                            {'descORasc'},{'dataset'},{'iXJac'},{'co2lays'},{'iDoStrowFiniteJac'},{'iFixTz_NoFit'},{'iFixO3_NoFit'},{'iFixTG_NoFit'},{'resetnorm2one'}];
 
 
 %disp('settings before')
@@ -81,8 +88,21 @@ elseif abs(settings.ocb_set) > 1
 end
 %---------------------------------------------------------------------------
 % Raw rate data file        
-if settings.dataset == 1
-  disp('AIRS 16 year rates or anomalies')
+if settings.dataset == -1   
+  disp('AIRS 16 year rates or anomalies, NO nu cal done')
+  if settings.descORasc == +1 & driver.i16daytimestep < 0
+    disp('doing descending latbin rates')
+    error('oops not done')
+  elseif driver.i16daytimestep > 0 & settings.ocb_set == 0
+    disp('doing descending OBS ANOMALY')
+    driver.rateset.datafile = ['ANOM_16dayavg_nonucal/latbin_0dayavg_' num2str(driver.iibin) '.mat'];  
+  elseif driver.i16daytimestep > 0 & settings.ocb_set == 1
+    disp('doing descending CAL ANOMALY')
+    driver.rateset.datafile = ['ANOM_16dayavg_nonucal/latbin_0dayavg_' num2str(driver.iibin) '_cal.mat'];  
+  end
+
+elseif settings.dataset == 1   %% DEFAULT
+  disp('AIRS 16 year rates or anomalies, nu cal done in there')
   if settings.descORasc == +1 & driver.i16daytimestep < 0
     disp('doing descending latbin rates')
     driver.rateset.datafile  = 'convert_strowrates2oemrates_random_16_year_v32_clear_nucal.mat';
@@ -129,12 +149,15 @@ elseif settings.dataset == 3
   end
 end
 
+fprintf(1,' <<< driver.rateset.datafile >>> = %s \n',driver.rateset.datafile)
+
 % Lag-1 correlation file; if using rate least-squares errors
 driver.rateset.ncfile   = '../oem_pkg/Test/all_lagcor.mat';
 driver.rateset.ncfile   = driver.rateset.datafile;
 
 % Get rate data, do Q/A elsewhere
-driver = get_rates(driver);
+driver = get_rates(driver);  %% this gets spectral rates (driver.rateset.rates), and uncertainty (driver.rateset.unc_rates)
+
 %---------------------------------------------------------------------------
 % Jacobian file: f = 2378x1 and M_TS_jac_all = 36x2378x200
 % driver.jacobian.filename = '/home/sergio/MATLABCODE/oem_pkg/Test/M_TS_jac_all.mat';
@@ -266,6 +289,7 @@ if driver.i16daytimestep > 0
   %% put in time varying Jacobian, err no more need to do this??? well sarta has older CO2/CH4 but let's comment this for now
   iDoStrowFiniteJac = +2; %% testing Strows finite difference jacs CO2(t)-CO2(370) ...    6/24-27/2019 interp in time, used to be +1
   iDoStrowFiniteJac = +3; %% testing Strows finite difference jacs CO2(t)-CO2(370) ...    6/24-27/2019 at all anom timesteps
+  iDoStrowFiniteJac = +4; %% testing Strows finite difference jacs CO2(t)-CO2(370) ...    6/24-27/2019 at all anom timesteps, age of air
   iDoStrowFiniteJac = +1; %% testing new Sergio finite diff jacs                          interp in time
   iDoStrowFiniteJac = -1; %% default, rely on time varying CO2/N20/CH4 jacs from kcarta,  done for all anom timsteps
 
@@ -309,6 +333,32 @@ if driver.i16daytimestep > 0
     %% sarta strow finite jacs
     iVarType = -3; %% this uses SARTA  finitediff jacs, which I have shown are bad?? or good??
     iVarType = +3; %% this uses kCARTA finitediff jacs, which I have shown are good, just want to test
+    m_ts_jac_coljac = replace_time_co2jac(m_ts_jac_coljac,driver.iibin,driver.i16daytimestep,iVarType); %% added this on 8/3
+    m_ts_jac_coljac = replace_time_n2ojac(m_ts_jac_coljac,driver.iibin,driver.i16daytimestep,iVarType); %% added this on 8/3
+    m_ts_jac_coljac = replace_time_ch4jac(m_ts_jac_coljac,driver.iibin,driver.i16daytimestep,iVarType); %% added this on 8/3
+    m_ts_jac_coljac = replace_time_cfc11jac(m_ts_jac_coljac,driver.iibin,driver.i16daytimestep,iVarType); %% added this on 8/21
+    m_ts_jac_coljac = replace_time_cfc12jac(m_ts_jac_coljac,driver.iibin,driver.i16daytimestep,iVarType); %% added this on 8/21 --> comment this out if iUgh == 4
+  elseif iXJac == 2 & iDoStrowFiniteJac == 4
+    fprintf(1,'updating time varying kCARTA CO2/N2O/CH4 jacs with interpolated BIGSTEP time varying jacs3 for testing 12/08/2019 ... age of air\n');
+    fprintf(1,'  note before July2, the tracegas profile (CO2/N2O/CH4) was US Std shoehorned and multiplied, so ppm was quite wonky except at 500 mb');
+    fprintf(1,'  note after July2, have improved the tracegas profile (CO2/N2O/CH4) so they are the same shape as glatm.dat');
+    fprintf(1,'else turned off \n')
+    %% const kCARTA jacs, update the trace gases
+    %% kcarta strow finite jacs
+    m_ts_jac_coljac = replace_time_co2jac(m_ts_jac_coljac,driver.iibin,driver.i16daytimestep,4); %% only used this on 6/26
+    m_ts_jac_coljac = replace_time_n2ojac(m_ts_jac_coljac,driver.iibin,driver.i16daytimestep,4); %% added this on 6/27
+    m_ts_jac_coljac = replace_time_ch4jac(m_ts_jac_coljac,driver.iibin,driver.i16daytimestep,4); %% added this on 6/27
+    m_ts_jac_coljac = replace_time_cfc11jac(m_ts_jac_coljac,driver.iibin,driver.i16daytimestep,4); %% added this on 8/21
+    m_ts_jac_coljac = replace_time_cfc12jac(m_ts_jac_coljac,driver.iibin,driver.i16daytimestep,4); %% added this on 8/29 ---> comment this out if iUgh == 4 <<<>>><<<>>><<<>>>
+  elseif iXJac == 1 & iDoStrowFiniteJac == 3
+    fprintf(1,'updating time varying SARTA CO2/N2O/CH4 jacs with interpolated BIGSTEP time varying jacs3 for testing 12/08/2019...\n');
+    fprintf(1,'  note before July2, the tracegas profile (CO2/N2O/CH4) was US Std shoehorned and multiplied, so ppm was quite wonky except at 500 mb');
+    fprintf(1,'  note after July2, have improved the tracegas profile (CO2/N2O/CH4) so they are the same shape as glatm.dat');
+    fprintf(1,'else turned off \n')
+    %% sarta strow finite jacs
+    iVarType = -3; %% this uses SARTA  finitediff jacs, which I have shown are bad?? or good??
+    iVarType = +3; %% this uses kCARTA finitediff jacs, which I have shown are good, just want to test
+    iVarType = +4; %% this uses kCARTA finitediff jacs, which I have shown are good, just want to test
     m_ts_jac_coljac = replace_time_co2jac(m_ts_jac_coljac,driver.iibin,driver.i16daytimestep,iVarType); %% added this on 8/3
     m_ts_jac_coljac = replace_time_n2ojac(m_ts_jac_coljac,driver.iibin,driver.i16daytimestep,iVarType); %% added this on 8/3
     m_ts_jac_coljac = replace_time_ch4jac(m_ts_jac_coljac,driver.iibin,driver.i16daytimestep,iVarType); %% added this on 8/3
@@ -417,7 +467,33 @@ if (abs(settings.set_tracegas) ~= 1) & (settings.set_tracegas ~= 2)
   error('incorrect setting for overriding xb tracegas values');
 end
 
-if settings.iFixTz_NoFit > 0 & strfind(driver.rateset.ocb_set,'obs')
+if settings.iFixTG_NoFit(1) > 0
+  disp('oh oh you wanna get rid of a trace gas')
+  junk = settings.iFixTG_NoFit;
+  badjunk = find(junk < 1 | junk > max(driver.jacobian.scalar_i) - 1);
+  if length(badjunk) > 0 
+    junk
+    driver.jacobian.scalar_i
+    error('can only thrown out a few of first 1 .. driver.jacobian.scalar_i - 1 gases!!!!')
+  else
+    numthrow = length(junk);
+    fprintf(1,'throwing out %3i trace gases from the fit \n',numthrow);
+%{
+    aux.jacobian.scalar_i_allgases = 1:driver.jacobian.scalar_i;
+    aux.jacobian.water_i_allgases  = driver.jacobian.water_i;
+    aux.jacobian.temp_i_allgases   = driver.jacobian.temp_i;
+    aux.jacobian.ozone_i_allgases  = driver.jacobian.ozone_i;
+
+    driver.jacobian.scalar_i = 1:driver.jacobian.scalar_i - numthrow;
+    driver.jacobian.water_i  = driver.jacobian.water_i - numthrow;
+    driver.jacobian.temp_i  = driver.jacobian.temp_i - numthrow;
+    driver.jacobian.ozone_i  = driver.jacobian.ozone_i - numthrow;
+%}
+  end
+end
+  
+
+if settings.iFixTz_NoFit > 0 & strcmp(driver.rateset.ocb_set,'obs')
   iFixTz_NoFit = +1;    %%% LARABBEE LIKES THIS TURNED OFF ie keep spectra as is, just read in ERA anom and proceed
 end
 iZeroTVers = 0; %%% use my fit to sarta calcs, as a proxy to ERA T anomalies
@@ -425,7 +501,7 @@ iZeroTVers = 1; %%% use raw ERA T anomalies, and do the averaging here on the fl
 iZeroTVers = 2; %%% use raw ERA T anomalies as saved in era_ptempanom.mat (see compare_era_anomaly_from_fit_and_model.m)
 if exist('iFixTz_NoFit','var')
   %% from strow_override_defaults_latbins_AIRS_fewlays.m
-  if iFixTz_NoFit > 0 & strfind(driver.rateset.ocb_set,'obs')
+  if iFixTz_NoFit > 0 & strcmp(driver.rateset.ocb_set,'obs')
     if iZeroTVers == 0
       izname = ['SAVE_BESTRUNv1/OutputAnomaly_CAL/' num2str(driver.iibin,'%02d') '/anomtest_timestep' num2str(driver.i16daytimestep) '.mat'];
       if exist(izname)
@@ -514,20 +590,22 @@ if exist('iFixTz_NoFit','var')
       end
 
     end  %% if iZeroTVers == 0 ! if iZeroTVers == 1 | if iZeroTVers == 2
-  end    %% if iFixTz_NoFit > 0 & strfind(driver.rateset.ocb_set,'obs')
+  end    %% if iFixTz_NoFit > 0 & strcmp(driver.rateset.ocb_set,'obs')
 end      %% if exist('iFixTz_NoFit','var')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 
-if settings.iFixO3_NoFit > 0 & strfind(driver.rateset.ocb_set,'obs')
-  iFixO3_NoFit = +1;    %%% LARABBEE LIKES THIS TURNED OFF ie keep spectra as is, just read in ERA anom and proceed
+if settings.iFixO3_NoFit >= 0 & (strcmp(driver.rateset.ocb_set,'obs') | strcmp(driver.rateset.ocb_set,'cal'))
+  iFixO3_NoFit = settings.iFixO3_NoFit;    %%% LARABBEE LIKES THIS TURNED OFF ie keep spectra as is, just read in ERA anom and proceed
 end
+
 iZeroO3Vers = 0; %%% use my fit to sarta calcs, as a proxy to ERA T anomalies
 iZeroO3Vers = 1; %%% use raw ERA T anomalies, and do the averaging here on the fly
 iZeroO3Vers = 2; %%% use raw ERA T anomalies as saved in era_ptempanom.mat (see compare_era_anomaly_from_fit_and_model.m)
+
 if exist('iFixO3_NoFit','var')
   %% from strow_override_defaults_latbins_AIRS_fewlays.m
-  if iFixO3_NoFit > 0 & strfind(driver.rateset.ocb_set,'obs')
+  if iFixO3_NoFit >= 0 & (strcmp(driver.rateset.ocb_set,'obs') | strcmp(driver.rateset.ocb_set,'cal'))
     if iZeroO3Vers == 0
       izname = ['SAVE_BESTRUNv1/OutputAnomaly_CAL/' num2str(driver.iibin,'%02d') '/anomtest_timestep' num2str(driver.i16daytimestep) '.mat'];
       if exist(izname)
@@ -561,7 +639,7 @@ if exist('iFixO3_NoFit','var')
       if exist(izname)
         fprintf(1,'WARNING setting dO3(z,lat,t)/dt using raw ERA snom in %s \n',izname);       
         era_anom = load(era_model_file);
-        figure(1); pcolor(era_anom.p16anomaly.ptempanomaly); shading flat; colorbar; colormap jet; caxis([-5 5])
+        figure(1); pcolor(era_anom.p16anomaly.gas_3anomaly); shading flat; colorbar; colormap jet; caxis([-5 5])
         junk = era_anom.p16anomaly.ozoneanomaly;
         for iiii = 1 : 20
           ixix = xx.jacobian.wvjaclays_used{iiii}-6;  %% 6 = xx.jacobian.scalar_i below
@@ -616,7 +694,12 @@ if exist('iFixO3_NoFit','var')
       end
 
     end  %% if iZeroO3Vers == 0 ! if iZeroO3Vers == 1 | if iZeroO3Vers == 2
-  end    %% if iFixO3_NoFit > 0 & strfind(driver.rateset.ocb_set,'obs')
+    if iFixO3_NoFit == 0
+      disp('hmm in SW no need to worry about O3, zero all this O3 stuff ...')
+      spectra_due_to_O3_jac = zeros(size(spectra_due_to_O3_jac));
+      cal_O3_rates = zeros(size(cal_O3_rates));
+    end 
+  end    %% if iFixO3_NoFit > 0 & strcmp(driver.rateset.ocb_set,'obs')
 end      %% if exist('iFixO3_NoFit','var')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -678,7 +761,7 @@ elseif settings.set_tracegas == +1 & driver.i16daytimestep > 0
 elseif settings.set_tracegas == +2 & driver.i16daytimestep > 1
   junk = 365/16; %% days per timestep 
   junk = (driver.i16daytimestep-1);
-  str = ['setting time varying rates for tracegas apriori : CO2 = 2.2  CH4 = 4.5 N2O = 0.8 CFC = -1.25 based on previous timestep'];
+  str = ['setting bootstrap time varying rates for tracegas apriori : CO2 = 2.2  CH4 = 4.5 N2O = 0.8 CFC = -1.25 based on previous timestep'];
   disp(str);
   fminus = ['OutputAnomaly_OBS/' num2str(driver.iibin,'%02d') '/anomtest_timestep' num2str(driver.i16daytimestep-1) '.mat'];
   fprintf(1,'looking for %s to fill in co2/n2o/ch4/cfc11/cfc12 rates ... \n',fminus)
@@ -721,7 +804,7 @@ if nn > 1
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
-if exist('iFixTz_NoFit','var') & strfind(driver.rateset.ocb_set,'obs')
+if exist('iFixTz_NoFit','var') & strcmp(driver.rateset.ocb_set,'obs')
 
   disp(' >>>>> need to account for cal_T_rates by eg subbing in T(z,t) from fits to cal or raw ERA anoms >>>>> ')
   xb(driver.jacobian.temp_i) = cal_T_rates;
@@ -745,7 +828,7 @@ if exist('iFixTz_NoFit','var') & strfind(driver.rateset.ocb_set,'obs')
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
-if exist('iFixO3_NoFit','var') & strfind(driver.rateset.ocb_set,'obs')
+if exist('iFixO3_NoFit','var') & (strcmp(driver.rateset.ocb_set,'obs') | strcmp(driver.rateset.ocb_set,'cal'))
 
   disp(' >>>>> need to account for cal_O3_rates by eg subbing in O3(z,t) from fits to cal or raw ERA anoms >>>>> ')
   xb(driver.jacobian.ozone_i) = cal_O3_rates;
@@ -802,7 +885,7 @@ if abs(settings.addco2jacs) ~= 1
   settings.addco2jacs
   error('incorrect setting for adding co2jacs to ERA calcrates');
 end
-if strfind(driver.rateset.ocb_set,'cal') & settings.addco2jacs > 0
+if strcmp(driver.rateset.ocb_set,'cal') & settings.addco2jacs > 0
   disp('Offset rates to add in CO2 jacs to ERA rates, to pretend there is CO2')
   jac = load('co2_kcartajac.mat');
   %  haha = driver.rateset.rates;
@@ -863,6 +946,23 @@ end
 %---------------------------------------------------------------------------
 % Do rate Q/A (empty for now)
 %---------------------------------------------------------------------------
+
+if settings.resetnorm2one == +1
+  %% we already cleared jac
+  %aux
+
+  disp('resetting all jabian norms to 1 ONE UNO UN MOJA')
+  boo1 = driver.qrenorm;
+  boo2 = aux.xb; 
+  %whos boo1 boo2
+  %[driver.qrenorm'  aux.xb]
+
+  for ii = 1 : length(boo1)
+    aux.m_ts_jac(:,ii) = aux.m_ts_jac(:,ii)/driver.qrenorm(ii);
+  end;
+  aux.xb = aux.xb./driver.qrenorm';
+  driver.qrenorm = ones(size(driver.qrenorm));
+end
 
 build_cov_matrices
 

@@ -1,5 +1,12 @@
 function [ch,fairs2645] = choose_goodchans_from_2645(chan_LW_SW)
 
+%%% topts.numchan = 2645;
+%%% topts.chan_LW_SW =  0;  %% just LW/MW DEFAULT
+%%% topts.chan_LW_SW = -1;  %% all chans,LW/MW and SW <<<<<<<
+%%% topts.chan_LW_SW = +1;  %% LW/MW but avoid deep 15 um 
+%%% topts.chan_LW_SW = -2;  %% SW only
+%%% topts.chan_LW_SW = +2;  %% LW/MW/SW but avoid deep 15 um
+
 % chan_LW_SW       0 is 640 to 1640 (default), 1 is 700 to 1640, -1 is 640 to 2740
 if nargin == 0
   chan_LW_SW = 1;
@@ -52,26 +59,105 @@ if chan_LW_SW == 0
   disp('use only LW/MW channels in choose_goodchans_from_2645.m')
   ahaLW = find(fairs2645 <= 1640);
   ch = intersect(ch,ahaLW);
-elseif chan_LW_SW == 1
-  disp('use LW/MW away from 690 cm-1 in choose_goodchans_from_2645.m')
+
+  newbad_n2o_list_dec1_2019 = [1621 1622 1624 1644];
+    ch = setdiff(ch,newbad_n2o_list_dec1_2019);
+  no_more_cfc11 = find(fairs2645 >= 843 & fairs2645 <= 849);
+  no_more_cfc11 = find((fairs2645 >= 840 & fairs2645 <= 856) | (fairs2645 >= 1070 & fairs2645 <= 1090));
+  no_more_cfc11 = [];  %% find_the_oem_channels.m --- use iChSet == 3
+    ch = setdiff(ch,no_more_cfc11);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+elseif chan_LW_SW == +1
+  disp('use LW/MW away from 700 cm-1 in choose_goodchans_from_2645.m')
   ahaLW = find(fairs2645 >= 690 & fairs2645 <= 1640);
+  ahaLW = find(fairs2645 >= 700 & fairs2645 <= 1640);
   ch = intersect(ch,ahaLW);
+
+  newbad_n2o_list_dec1_2019 = [1621 1622 1624 1644];
+    ch = setdiff(ch,newbad_n2o_list_dec1_2019);
+  no_more_cfc11 = find(fairs2645 >= 843 & fairs2645 <= 849);
+  no_more_cfc11 = find((fairs2645 >= 840 & fairs2645 <= 856) | (fairs2645 >= 1070 & fairs2645 <= 1090));
+  no_more_cfc11 = [];  %% find_the_oem_channels.m --- use iChSet == 3
+    ch = setdiff(ch,no_more_cfc11);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
 elseif chan_LW_SW == -1
   disp('use LW and SW chans in choose_goodchans_from_2645.m');
-  %% ahaSWhigh = find(fairs2645 >= 2310 & fairs2645 <= 2370);
+
+  ahaLW = find(fairs2645 <= 1640);
+  chLW = intersect(ch,ahaLW);
+
+  newbad_n2o_list_dec1_2019 = [1621 1622 1624 1644];
+    ch = setdiff(ch,newbad_n2o_list_dec1_2019);
+  no_more_cfc11 = find(fairs2645 >= 843 & fairs2645 <= 849);
+  no_more_cfc11 = find((fairs2645 >= 840 & fairs2645 <= 856) | (fairs2645 >= 1070 & fairs2645 <= 1090));
+  no_more_cfc11 = [];  %% find_the_oem_channels.m --- use iChSet == 3
+    ch = setdiff(ch,no_more_cfc11);
+
+%  %% ahaSWhigh = find(fairs2645 >= 2310 & fairs2645 <= 2370);
+%  junk = load('stratSW.mat');
+%  ahaSWhigh = junk.iStratSW;
+%  %ch = setdiff(ch,ahaSWhigh);
+  ahaSWhigh1 = find(fairs2645 >= 2310 & fairs2645 <= 2370);
+  ahaSWhigh1 = find(fairs2645 >= 1910 & fairs2645 <= 2870);
+  ahaSWhigh1 = find(fairs2645 >= 2230 & fairs2645 <= 2770);  %% avoid CO chans!!!
+  ahaSWhigh1 = find((fairs2645 >= 2230 & fairs2645 <= 2260) | (fairs2645 >= 2385 & fairs2645 <= 2760));  %% avoid CO and high alt CO2 chans!!!
   junk = load('stratSW.mat');
-  ahaSWhigh = junk.iStratSW;
-  ch = setdiff(ch,ahaSWhigh);
+  ahaSWhigh2 = junk.iStratSW;
+  chSW = setdiff(ahaSWhigh1,ahaSWhigh2);
+  chacha = find(fairs2645(chSW) > 1910);  %% somehow a few LW chans still get in
+  chSW = chSW(chacha);
+
+  ch = union(chLW,chSW)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
 elseif chan_LW_SW == -2
   disp('use SW chans only in choose_goodchans_from_2645.m');
   ahaSWhigh1 = find(fairs2645 >= 2310 & fairs2645 <= 2370);
   ahaSWhigh1 = find(fairs2645 >= 1910 & fairs2645 <= 2870);
+  ahaSWhigh1 = find(fairs2645 >= 2230 & fairs2645 <= 2770);  %% avoid CO chans!!!
+  ahaSWhigh1 = find((fairs2645 >= 2230 & fairs2645 <= 2260) | (fairs2645 >= 2385 & fairs2645 <= 2760));  %% avoid CO and high alt CO2 chans!!!
   junk = load('stratSW.mat');
   ahaSWhigh2 = junk.iStratSW;
   ch = setdiff(ahaSWhigh1,ahaSWhigh2);
-  chacha = find(fairs2645(ch) > 1910);  %% somehow a few LW changs still get in
-  %ch = ch(6:end);                      %% somehow a few LW changs still get in
+  chacha = find(fairs2645(ch) > 1910);  %% somehow a few LW chans still get in
+  %ch = ch(6:end);                      %% somehow a few LW chans still get in
   ch = ch(chacha);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+elseif chan_LW_SW == +2
+  disp('use LW/MW away from 700 cm-1, plus SW chans, in choose_goodchans_from_2645.m')
+
+  ahaLW = find(fairs2645 <= 1640);
+  ahaLW = find(fairs2645 >= 700 & fairs2645 <= 1640);
+
+  chLW = intersect(ch,ahaLW);
+
+  newbad_n2o_list_dec1_2019 = [1621 1622 1624 1644];
+    ch = setdiff(ch,newbad_n2o_list_dec1_2019);
+  no_more_cfc11 = find(fairs2645 >= 843 & fairs2645 <= 849);
+  no_more_cfc11 = find((fairs2645 >= 840 & fairs2645 <= 856) | (fairs2645 >= 1070 & fairs2645 <= 1090));
+  no_more_cfc11 = [];  %% find_the_oem_channels.m --- use iChSet == 3
+    ch = setdiff(ch,no_more_cfc11);
+
+%  %% ahaSWhigh = find(fairs2645 >= 2310 & fairs2645 <= 2370);
+%  junk = load('stratSW.mat');
+%  ahaSWhigh = junk.iStratSW;
+%  %ch = setdiff(ch,ahaSWhigh);
+  ahaSWhigh1 = find(fairs2645 >= 2310 & fairs2645 <= 2370);
+  ahaSWhigh1 = find(fairs2645 >= 1910 & fairs2645 <= 2870);
+  ahaSWhigh1 = find(fairs2645 >= 2230 & fairs2645 <= 2770);  %% avoid CO chans!!!
+  ahaSWhigh1 = find((fairs2645 >= 2230 & fairs2645 <= 2260) | (fairs2645 >= 2385 & fairs2645 <= 2760));  %% avoid CO and high alt CO2 chans!!!
+  junk = load('stratSW.mat');
+  ahaSWhigh2 = junk.iStratSW;
+  chSW = setdiff(ahaSWhigh1,ahaSWhigh2);
+
+  chacha = find(fairs2645(chSW) > 1910);  %% somehow a few LW chans still get in
+  chSW = chSW(chacha);
+
+  ch = union(chLW,chSW)
+
 else
   error('unknown option')  
 end

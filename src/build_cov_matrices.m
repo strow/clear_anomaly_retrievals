@@ -49,7 +49,7 @@ cov_set = [1.0  0.05/2    0.05/2    1/2       0.05/25      0.05/25    1/2      0
 cov_set = [1.0  0.05/2    0.05/2    1/2       0.01/25      0.01/25    1/2      0.05/2    0.05/0.75      1/2        1E-1     1E-1  1E-1]; %works pretty well for topts.obs_corr_matrix = -1  and 10 lays, water not very wiggly
 cov_set = [1.0  0.05/2    0.05/2    1/2       0.1/25       0.1/25     1/2      0.05/2    0.05/0.75      1/2        1E-1     1E-1  1E-1]; %works pretty well for topts.obs_corr_matrix = -1  and 10 lays, OBS AND ERA CALCS good fits (great for ERA calcs T and O3 need to slightly improve WV make it slightly more wiggly)
 cov_set = [1.0  0.05/2    0.05/2    1/2       0.5/25       0.5/25     1/2      0.05/2    0.05/0.75      1/2        1E-1     1E-1  1E-1]; %works pretty well for topts.obs_corr_matrix = -1  and 10 lays, OBS AND ERA CALCS good fits (great for ERA calcs T and O3 need to slightly improve WV make it slightly less wiggly)
-cov_set = [1.0  0.05/2    0.05/2    1/2       0.15/25      0.15/25    1/2      0.05/2    0.05/0.75      1/2        1E-1     1E-1  1E-1]; %works pretty well for topts.obs_corr_matrix = -1  and 10 lays, OBS AND ERA CALCS good fits (great for ERA calcs T and O3 need to slightly improve WV make it slightly less wiggly)
+cov_set = [1.0  0.05/2    0.05/2    1/2       0.15/25      0.15/25    1/2      0.05/2    0.05/0.75      1/2        1E-1     1E-1  1E-1]; %works pretty well for topts.obs_corr_matrix = -1  and 10 lays, OBS AND ERA CALCS good fits (great for ERA calcs T and O3 need to slightly improve WV make it slightly less wiggly)  <<<<< used as DEFAULT starting for all the SAVE_blah dirs, qrenorm ~= 1 >>>>
 
 %{
 %%% topts.obs_corr_matrix = +1, 10 lays, topts.invtype = 4
@@ -72,16 +72,31 @@ cov_set = [1.0  1e-1     1e-1      1/2       1e-1          1e-1        1/2      
 %cov_set = [1.0  1e-2      1e-2      1/2       1e-3          1e-3        1/2      1e-2      1e-2         1/2        1e+4      1e+5   1e+2 ]; %works really well for topts.obs_corr_matrix = +1  and 20 lays, OBS fits 700 chans
 %}
 
+%{
+%%% >>>>>>>>>>>>>>>>>>> testing qrenorm = 1 and multiply x1 ......
+%%% >>>>>>>>>>>>>>>>>>> testing qrenorm = 1 and multiply x1 ......
+%%% >>>>>>>>>>>>>>>>>>> testing qrenorm = 1 and multiply x1 ......
+cov_set = [1.0  0.25    0.25    1/2       1.5/25      1.5/25    1/2      0.5/2    0.5/0.75      1/2        1E-1     1E-1  1E-1]; %%%%%% <<<<< see above, used as DEFAULT starting for all the SAVE_blah dirs when qrenorm ~= 1 >>>>
+cov_set = [1.0  0.25    0.25    1/2       1.5/25      1.5/25    1/2      0.5/2    0.5/0.75      1/2        1E+1     1E+1  1E+1]; %%% not too bad, definitely need to up O3 reg (alpha03)
+cov_set = [1.0  0.25    0.25    1/2       0.06        0.06      1/2      0.25     0.667         1/2        1E+2     1E+2  1E+3]; %% pretty good, could still up O3 reg (alpha3) and actually on the WV/T as well
+cov_set = [1.0  0.25    0.25    1/2       0.06        0.06      1/2      0.25     0.667         1/2        5E+2     5E+2  5E+3]; %% pretty good, could still up O3 reg (alpha3) and actually on the WV/T as well
+cov_set = [1.0  0.25    0.25    1/2       0.06        0.06      1/2      0.25     0.667         1/2        1E+3     1E+3  1E+4]; %% pretty good, could still up O3 reg (alpha3) and actually on the WV/T as well
+%%% >>>>>>>>>>>>>>>>>>> testing qrenorm = 1 and multiply x1 ......
+%%% >>>>>>>>>>>>>>>>>>> testing qrenorm = 1 and multiply x1 ......
+%%% >>>>>>>>>>>>>>>>>>> testing qrenorm = 1 and multiply x1 ......
+%}
+
 %% testing perturbations for paper, see PAPER/questions.txt Q4
-%reduce = [2 3 5 6 8 9];  %% cx.lev1,cx.lev2 for x=WV,T,O3
-%cov_set(reduce) =  cov_set(reduce) * 0.1;
-%cov_set(reduce) =  cov_set(reduce) * 10.0;
+reduce = [2 3 5 6 8 9];  %% cx.lev1,cx.lev2 for x=WV,T,O3
+%cov_set(reduce) =  cov_set(reduce) * 0.1; disp(' >>>> WARNING : build_cov_matrices.m : multiplied cov unc x0.1')
+%cov_set(reduce) =  cov_set(reduce) * 5.0; disp(' >>>> WARNING : build_cov_matrices.m : multiplied cov unc x5')
+%cov_set(reduce) =  cov_set(reduce) * 10.0; disp(' >>>> WARNING : build_cov_matrices.m : multiplied cov unc x10')
+%cov_set(reduce) =  cov_set(reduce) * 100.0; disp(' >>>> WARNING : build_cov_matrices.m : multiplied cov unc x100')
 
 fprintf(1,'cov_set lc = %8.6f \n',cov_set(1));
 junk = cov_set([2 3 4  11]); fprintf(1,'      T  : sig_trop  sig_strat cwide alpha = %8.6e %8.6e %8.6e %8.6e \n',junk)
 junk = cov_set([5 6 7  12]); fprintf(1,'      WV : sig_trop  sig_strat cwide alpha = %8.6e %8.6e %8.6e %8.6e \n',junk);
 junk = cov_set([8 9 10 13]); fprintf(1,'      O3 : sig_trop  sig_strat cwide alpha = %8.6e %8.6e %8.6e %8.6e \n',junk)
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -123,12 +138,12 @@ if ~exist('iFixTz_NoFit')
   t_sigma = (tunc./tnorm);
   tmat = (t_sigma'*t_sigma).*mat_od;
   driver.oem.tunc = tunc;
-elseif exist('iFixTz_NoFit','var') & ~strfind(driver.rateset.ocb_set,'obs')
+elseif exist('iFixTz_NoFit','var') & ~strcmp(driver.rateset.ocb_set,'obs')
   tunc = cov2lev(ct(ix),driver.jacobian.numlays);
   t_sigma = (tunc./tnorm);
   tmat = (t_sigma'*t_sigma).*mat_od;
   driver.oem.tunc = tunc;
-elseif exist('iFixTz_NoFit','var') & strfind(driver.rateset.ocb_set,'obs')
+elseif exist('iFixTz_NoFit','var') & strcmp(driver.rateset.ocb_set,'obs')
   %% from strow_override_defaults_latbins_AIRS_fewlays.m
   if iFixTz_NoFit > 0
     disp('making sure T is not fitted!!!!')
@@ -147,14 +162,14 @@ if ~exist('iFixO3_NoFit')
   oz_sigma = (ozunc./oznorm);
   ozmat = (oz_sigma'*oz_sigma).*mat_od;
   driver.oem.ozunc = ozunc;
-elseif exist('iFixO3_NoFit','var') & ~strfind(driver.rateset.ocb_set,'obs')
+elseif exist('iFixO3_NoFit','var') & ~strcmp(driver.rateset.ocb_set,'obs') & ~strcmp(driver.rateset.ocb_set,'cal')
   ozunc = cov2lev(coz(ix),driver.jacobian.numlays);
   oz_sigma = (ozunc./oznorm);
   ozmat = (oz_sigma'*oz_sigma).*mat_od;
   driver.oem.ozunc = ozunc;
-elseif exist('iFixO3_NoFit','var') & strfind(driver.rateset.ocb_set,'obs')
+elseif exist('iFixO3_NoFit','var') & (strcmp(driver.rateset.ocb_set,'obs') | strcmp(driver.rateset.ocb_set,'cal'))
   %% from strow_override_defaults_latbins_AIRS_fewlays.m
-  if iFixO3_NoFit > 0
+  if iFixO3_NoFit >= 0
     disp('making sure O3 is not fitted!!!!')
 
     %driver.oem.o3unc = ones(size(o3unc)) * 1.0e-16;  cov_set(11) = 1.0e10;  %% THIS COMBO WORKS, CO2, CFC,N2O, CH4 good but still see residual dT/dt
@@ -188,13 +203,29 @@ end
 
 %% testing perturbations for paper, see PAPER/questions.txt Q5
 %reduce = [11 12 13];  %% alphaWV alphaT alphaO3
-%cov_set(reduce) =  cov_set(reduce) * 0.1; fmatd = fmatd*0.1;
-%cov_set(reduce) =  cov_set(reduce) * 10.0; fmatd = fmatd*10;
+%cov_set(reduce) =  cov_set(reduce) * 10.0; fmatd = fmatd*10; disp(' >>>> WARNING : build_cov_matrices.m : multiplied fmatd x10')
+%cov_set(reduce) =  cov_set(reduce) * 0.1; fmatd = fmatd*0.1; disp(' >>>> WARNING : build_cov_matrices.m : multiplied fmatd x0.1')
+%cov_set(reduce) =  cov_set(reduce) * 0.1; %% fmatd = fmatd*0.1; disp(' >>>> WARNING : build_cov_matrices.m : multiplied fmatd x0.1')
+%cov_set(reduce) =  cov_set(reduce) * 0.001; %% fmatd = fmatd*0.1; disp(' >>>> WARNING : build_cov_matrices.m : multiplied fmatd x0.1')
+%cov_set(reduce) =  cov_set(reduce) * 1.0e6; %% fmatd = fmatd*0.1; disp(' >>>> WARNING : build_cov_matrices.m : multiplied fmatd x0.1')
+%cov_set(reduce) =  cov_set(reduce) * 1.0e10; %% fmatd = fmatd*0.1; disp(' >>>> WARNING : build_cov_matrices.m : multiplied fmatd x0.1')
+%cov_set(reduce) =  cov_set(reduce) * 1.0e-10; %% fmatd = fmatd*0.1; disp(' >>>> WARNING : build_cov_matrices.m : multiplied fmatd x0.1')
 
 if settings.set_tracegas == 1 & settings.co2lays == 1 & driver.i16daytimestep < 0
   fmatd(1:5) = fmatd(1:5)*0.0000001;   %% have put in xb(1:3) so we should not change those values
 elseif settings.set_tracegas == 1 & settings.co2lays == 3 & driver.i16daytimestep < 0
   fmatd(1:7) = fmatd(1:7)*0.0000001;   %% have put in xb(1:3) so we should not change those values
+end
+
+if settings.iFixTG_NoFit(1) > 0
+  disp('setting uncertainties for some tracegases to be 0, setting a priori xb for these gases also to be 0')
+  xb(settings.iFixTG_NoFit) = 0.0;
+  aux.xb(settings.iFixTG_NoFit) = 0.0;
+  driver.oem.xb(settings.iFixTG_NoFit) = 0.0;
+  fmatd(settings.iFixTG_NoFit) = fmatd(settings.iFixTG_NoFit) * 0.0000000000000001; %% this way we do not change values
+  
+  m_ts_jac(:,settings.iFixTG_NoFit) = eps;
+  aux.m_ts_jac(:,settings.iFixTG_NoFit) = eps;
 end
 
 fmat  = diag(fmatd./fnorm); 
@@ -218,23 +249,37 @@ end
 
 %---------------------------------------------------------------------
 % Empirical regularization parameters and switches
-driver.oem.reg_type = 'reg_and_cov'; % 'reg_and_cov','cov','reg' are other choices
+%% from oem_run/rodgers.m
+%% switch driver.oem.reg_type
+%%   case 'reg_and_cov'
+%%     r = rcov + rc;
+%%   case 'reg'
+%%     r = rc;
+%%   case 'cov'
+%%     r = rcov;
+%%   otherwise
+%%     disp('Incorrect choice driver.oem.reg_type')
+%% end
+%%
+driver.oem.reg_type = 'cov';         % 'reg_and_cov','cov','reg' are other choices
+driver.oem.reg_type = 'reg';         % 'reg_and_cov','cov','reg' are other choices
+driver.oem.reg_type = 'reg_and_cov'; % 'reg_and_cov','cov','reg' are other choices DEFAULT
 
 % Separate reg weights for water, temperature, ozone profiles
 driver.oem.alpha_water = cov_set(12);
 
 if ~exist('iFixTz_NoFit')
   driver.oem.alpha_temp =  cov_set(11);
-elseif exist('iFixTz_NoFit','var') & ~strfind(driver.rateset.ocb_set,'obs')
+elseif exist('iFixTz_NoFit','var') & ~strcmp(driver.rateset.ocb_set,'obs')
   driver.oem.alpha_temp =  cov_set(11);
-elseif exist('iFixTz_NoFit','var') & strfind(driver.rateset.ocb_set,'obs')
-  disp('oops iFixTz_NoFit exits, for driver.rateset.ocb_set = obs so not settiong driver.oem.alpha_temp')
+elseif exist('iFixTz_NoFit','var') & strcmp(driver.rateset.ocb_set,'obs')
+  disp('oops iFixTz_NoFit exists, for driver.rateset.ocb_set = obs so not setting driver.oem.alpha_temp')
 end
 
 if ~exist('iFixO3_NoFit')
   driver.oem.alpha_ozone =  cov_set(13);
-elseif exist('iFixO3_NoFit','var') & ~strfind(driver.rateset.ocb_set,'obs')
+elseif exist('iFixO3_NoFit','var') & ~strcmp(driver.rateset.ocb_set,'obs') & ~strcmp(driver.rateset.ocb_set,'cal')
   driver.oem.alpha_ozone =  cov_set(13);
-elseif exist('iFixO3_NoFit','var') & strfind(driver.rateset.ocb_set,'obs')
-  disp('oops iFixO3_NoFit exits, for driver.rateset.ocb_set = obs so not settiong driver.oem.alpha_ozone')
+elseif exist('iFixO3_NoFit','var') & (strcmp(driver.rateset.ocb_set,'obs') | strcmp(driver.rateset.ocb_set,'cal'))
+  disp('oops iFixO3_NoFit exists, for driver.rateset.ocb_set = obs so not setting driver.oem.alpha_ozone')
 end

@@ -13,7 +13,7 @@ t1x = tic;
 %% 16 years so total of 365/16 * 16 = 365 steps
 
 JOB = str2num(getenv('SLURM_ARRAY_TASK_ID'));
-%JOB = 20
+JOB = 20
 %JOB = 357
 
 %%%%%%%%%% ANOM or RATES %%%%%%%%%%
@@ -47,6 +47,8 @@ iLat0 =  1; iLatE = 40;
 %JOB = 234; iLat0 = 20; iLatE = iLat0;  %% big bad voodoo daddy
 %JOB = 194; iLat0 = 21; iLatE = iLat0;  %% big bad voodoo daddy
 
+%JOB = 194; iLat0 =  1; iLatE = 40;
+
 %for iLat = iLatE : -1 : iLatE
 for iLat = iLat0 : iLatE
   disp(' ')
@@ -57,9 +59,9 @@ for iLat = iLat0 : iLatE
   driver.iibin     = iLat;
 
   %%%%%%%%%% ANOM or RATES %%%%%%%%%%
+  driver.i16daytimestep = JOB;  %% this is when doing anomaly
   driver.i16daytimestep = -1;   %% for the rates, not anomalies, RUN BY HAND BY UN-COMMENTING THIS LINE and 
                                 %% on top JOB = 20, in change_important_topts_settings.m also set topts.set_tracegas = -1;
-  driver.i16daytimestep = JOB;  %% this is when doing anomaly
   %%%%%%%%%% ANOM or RATES %%%%%%%%%%
 
   ix = iLat;

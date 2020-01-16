@@ -34,7 +34,7 @@ else
 end
 
 if settings_chan_LW_SW ~= -2
-  !! we need to check/add in a few LW channels
+  %% we need to check/add in a few LW channels
   if iChSet == 1
     disp('find_the_oem_channels.m iChSet == 1 (old chans)')
     iless700 = find(f(ch) < 700);
@@ -116,3 +116,23 @@ if settings_chan_LW_SW ~= -2
     error('iChSet = 1,2,3 only')
   end
 end
+fprintf(1,'number of chans being used after iChSet cases = %4i \n',length(ch))
+
+%% explicitly get rid of any additional bad chans here, in case they were "forgotten"
+disp('just in case, getting rid of LW N2O chans ..... ')
+newbad_n2o_list_dec01_2019 = [1621 1622 1624 1644];
+newbad_n2o_list_dec26_2019 = [1621 1622 1624 1644 1573 1585 1593 1634 1638 1651 1652 1660 1662 1664 1665 1666 ];
+  %ch = setdiff(ch,newbad_n2o_list_dec01_2019);
+  ch = setdiff(ch,newbad_n2o_list_dec26_2019);
+
+%if settings_chan_LW_SW ~= -2
+%  disp('just in case, OH OH adding back in LW N2O chans ..... ')
+%  newbad_n2o_list_dec1_2019 = [1621 1622 1624 1644];
+%  ch = union(ch,newbad_n2o_list_dec1_2019);
+%end
+
+disp('just in case, getting rid of SW chans ..... ')
+newbad_sw_list_dec5_2019 = [2247 2248 2249 2250 2251 2624];
+  ch = setdiff(ch,newbad_sw_list_dec5_2019);
+
+fprintf(1,'final number of chans being used = %4i \n',length(ch))

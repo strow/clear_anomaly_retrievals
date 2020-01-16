@@ -13,12 +13,19 @@ else
   iOrigOrV2 = 1;  %% this is my original finite diff jacs of 10% pert, done almost all the time
   iOrigOrV2 = 2;  %% this is using Larrabee's idea of CFC11(t)-370 , test 6/24 underlying geo = average
   iOrigOrV2 = 3;  %% this is using Larrabee's idea of CFC11(t)-370 , test 7/01 underlying geo = time varying
+  iOrigOrV2 = 4;  %% this is using Larrabee's idea of CO2(t)-370 , test 12/08 underlying geo = time varying, has Age of Air
 
   iOrigOrV2 = iSwitchType;
 
   iUgh = 4;   %% latest, no seasonal, without CFC11, works very well
   iUgh = 5;   %% latest, no seasonal, with CFC12
-  if iOrigOrV2 == 3 
+  if iOrigOrV2 == 4  
+    disp('replacing CFC11 jac with time interpolation kcarta, iOrigOrV2 == 4, Age of AIR')
+    if iUgh == 5
+      newjacname = ['/home/sergio/MATLABCODE/oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/Anomaly365_16_12p8/RESULTS_FiniteDiff_Try4/'];       %% no seasonal, redone
+      newjacname = [newjacname '/kcarta_' num2str(i16daytimestep,'%03d') '_tracegas_finitediff_5_2645_V5.mat']; %% Dec 08,         better CO2/CH4/N2O/CFC11/CFC12 prof, fixed 2002/09 yay plus Age of AIR
+    end
+  elseif iOrigOrV2 == 3 
     disp('replacing CFC11 jac with time interpolation kcarta, iOrigOrV2 == 3')
     if iUgh == 1
       newjacname = ['/home/sergio/MATLABCODE/oem_pkg_run_sergio_AuxJacs/MakeJacskCARTA_CLR/Anomaly365_16_12p8/RESULTS_FiniteDiff/'];
@@ -53,9 +60,8 @@ else
     error('huh????')
   end
 
-  fprintf(1,' external cfc11jac = %s \n',newjacname);
   new = load(newjacname);
-  if abs(iOrigOrV2) == 3
+  if abs(iOrigOrV2) == 3 | iOrigOrV2 == 4
     new_cfc11_jac = squeeze(new.tracegas(iiBin,:,4));
   elseif iOrigOrV2 == 1 | iOrigOrV2 == 2
 

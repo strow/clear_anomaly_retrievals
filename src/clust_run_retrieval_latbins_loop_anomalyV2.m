@@ -13,7 +13,6 @@ t1x = tic;
 %% 16 years so total of 365/16 * 16 = 365 steps
 
 JOB = str2num(getenv('SLURM_ARRAY_TASK_ID'));
-%JOB = 20
 
 %%%%%%%%%% ANOM or RATES %%%%%%%%%%
 %JOB = 20   %%% uncomment this when trying to fit for linear rates!!! fix change_important_topts_settings, and set <<< driver.i16daytimestep = -1 >>>;  below
@@ -38,6 +37,8 @@ addpath Plotutils
 iTimeStep0 = 11; iTimeStepE = 31;
 iTimeStep0 = 21; iTimeStepE = 21;
 iTimeStep0 =  1; iTimeStepE = 365;
+
+%JOB = 30; iTimeStep0 =  1; iTimeStepE = 365;
 
 for iTimeStep = iTimeStep0 : iTimeStepE
   disp(' ')

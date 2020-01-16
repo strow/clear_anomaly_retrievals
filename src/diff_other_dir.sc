@@ -1,0 +1,19 @@
+diff build_cov_matrices.m                             /home/sergio/MATLABCODE/oem_pkg_run/AIRS_new_clear_scan_August2019/.  >& ugh1
+diff change_important_topts_settings.m                /home/sergio/MATLABCODE/oem_pkg_run/AIRS_new_clear_scan_August2019/.  >& ugh2
+diff choose_goodchans_from_2645.m                     /home/sergio/MATLABCODE/oem_pkg_run/AIRS_new_clear_scan_August2019/.  >& ugh3
+#diff clust_run_retrieval_latbins_loop_anomaly.m       /home/sergio/MATLABCODE/oem_pkg_run/AIRS_new_clear_scan_August2019/.  >& ugh4
+#diff clust_run_retrieval_latbins_loop_anomalyV2.m     /home/sergio/MATLABCODE/oem_pkg_run/AIRS_new_clear_scan_August2019/.  >& ugh5
+diff combinejaclays.m                                 /home/sergio/MATLABCODE/oem_pkg_run/AIRS_new_clear_scan_August2019/.  >& ugh6
+diff cov2lev.m                                        /home/sergio/MATLABCODE/oem_pkg_run/AIRS_new_clear_scan_August2019/.  >& ugh7
+diff find_the_oem_channels.m                          /home/sergio/MATLABCODE/oem_pkg_run/AIRS_new_clear_scan_August2019/.  >& ugh8
+diff get_rates.m                                      /home/sergio/MATLABCODE/oem_pkg_run/AIRS_new_clear_scan_August2019/.  >& ugh9
+diff replace_time_cfc11jac.m                          /home/sergio/MATLABCODE/oem_pkg_run/AIRS_new_clear_scan_August2019/.  >& ugh10
+diff replace_time_cfc12jac.m                          /home/sergio/MATLABCODE/oem_pkg_run/AIRS_new_clear_scan_August2019/.  >& ugh11
+diff replace_time_ch4jac.m                            /home/sergio/MATLABCODE/oem_pkg_run/AIRS_new_clear_scan_August2019/.  >& ugh12
+diff replace_time_co2jac.m                            /home/sergio/MATLABCODE/oem_pkg_run/AIRS_new_clear_scan_August2019/.  >& ugh13
+diff replace_time_n2ojac.m                            /home/sergio/MATLABCODE/oem_pkg_run/AIRS_new_clear_scan_August2019/.  >& ugh14
+diff strow_override_defaults_latbins_AIRS_fewlays.m   /home/sergio/MATLABCODE/oem_pkg_run/AIRS_new_clear_scan_August2019/.  >& ugh15
+diff trop_index.m                                     /home/sergio/MATLABCODE/oem_pkg_run/AIRS_new_clear_scan_August2019/.  >& ugh16
+
+diff clust_run_retrieval_latbins_loop_anomaly.m       /home/sergio/MATLABCODE/oem_pkg_run/AIRS_new_clear_scan_August2019/clust_run_retrieval_latbins_AIRS_iasitimespan_loop_anomaly.m        >& ugh17
+diff clust_run_retrieval_latbins_loop_anomalyV2.m     /home/sergio/MATLABCODE/oem_pkg_run/AIRS_new_clear_scan_August2019/clust_run_retrieval_latbins_AIRS_iasitimespan_loop_anomalyV2.m      >& ugh18

@@ -68,6 +68,7 @@ elseif driver.i16daytimestep > 0
         iJunkTimeStep = driver.i16daytimestep;
       end
     end
+
     anom_noise = squeeze(anom_noise.btn_avg(ix,iJunkTimeStep,:));
     lala = find(isnan(anom_noise) | isinf(anom_noise));
     anom_noise(lala) = facx;
@@ -93,10 +94,11 @@ elseif driver.i16daytimestep > 0
         elseif (iSetType >= 2)
           driver.rateset.unc_rates = anom_noise;                            %%% after june 24, 2019
         end
-
       otherwise
         error('anom for obs + cal only')
     end  
   end
 end
 
+%% disp('TESTING driver.rateset.unc_rates = 0.01')
+%% driver.rateset.unc_rates = 0.01 * ones(size(driver.rateset.unc_rates));
